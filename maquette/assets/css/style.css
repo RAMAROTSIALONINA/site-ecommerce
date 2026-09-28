@@ -190,6 +190,13 @@ p { margin: 0 0 1em; }
 .hdr-action .lbl { display: none; }
 @media (min-width: 1000px) { .hdr-action .lbl { display: block; } }
 .hdr-action .count { position: absolute; top: 4px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .68rem; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; }
+@media (max-width: 480px) {
+  .logo small { display: none; }
+  .logo-mark { width: 32px; height: 32px; }
+  .hdr-main { gap: 6px; }
+  .hdr-action { min-width: 42px; padding: 4px; }
+  .hdr-actions .hdr-account { display: none; } /* le compte reste accessible par la barre du bas */
+}
 .hdr-burger { display: inline-flex; }
 @media (min-width: 1200px) { .hdr-burger { display: none; } }
 .hdr-mobile-search { padding: 0 0 12px; }

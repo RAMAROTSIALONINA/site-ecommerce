@@ -29,7 +29,7 @@
           <div class="hdr-search">${search}</div>
           <nav class="hdr-actions" aria-label="Raccourcis">
             <a class="hdr-action" href="compte.html#favoris" aria-label="Favoris">${icon('heart')}<span class="lbl">Favoris</span></a>
-            <a class="hdr-action" href="${logged ? 'compte.html' : 'connexion.html'}" aria-label="Mon compte">${icon('user')}<span class="lbl">${logged ? 'Bonjour, ' + esc(App.User.get().prenom) : 'Se connecter'}</span></a>
+            <a class="hdr-action hdr-account" href="${logged ? 'compte.html' : 'connexion.html'}" aria-label="Mon compte">${icon('user')}<span class="lbl">${logged ? 'Bonjour, ' + esc(App.User.get().prenom) : 'Se connecter'}</span></a>
             <a class="hdr-action" href="panier.html" aria-label="Panier">${icon('cart')}<span class="lbl">Panier</span><span class="count" data-cart-count>0</span></a>
           </nav>
         </div>
