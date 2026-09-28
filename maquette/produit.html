@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0F766E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
 </head>
 <body data-page="produit">
   <div id="app-header"></div>
@@ -36,9 +36,9 @@
   <div class="sticky-buy" id="sticky"></div>
   <div id="app-footer"></div>
 
-  <script src="assets/js/data.js"></script>
-  <script src="assets/js/core.js"></script>
-  <script src="assets/js/shop.js"></script>
+  <script src="assets/js/data.js?v=2"></script>
+  <script src="assets/js/core.js?v=2"></script>
+  <script src="assets/js/shop.js?v=2"></script>
   <script>
     const { icon, P, V, C, fmt, esc, pv, stars, priceHtml, stockHtml, badgesHtml, dispo, productCard, Cart, Favs, toast, modal } = App;
     const p = P(App.qs('id')) || DB.produits[8];
@@ -62,9 +62,9 @@
         <div class="opts" role="radiogroup" aria-label="${k}">${vals.map(x => `<button class="opt ${sel[k] === x ? 'on' : ''}" role="radio" aria-checked="${sel[k] === x}" data-g="${k}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`).join('') : '';
       document.getElementById('pdp').innerHTML = `
         <div class="gallery">
-          <div style="position:relative">${pv({ ...p, id: 'p' + (parseInt(p.id.slice(1)) + photo) })}<div class="badges" style="position:absolute;top:16px;left:16px;display:flex;gap:6px">${badgesHtml(p)}</div></div>
-          <div class="thumbs">${[0, 1, 2, 3].map(i => `<div data-photo="${i}" class="${photo === i ? 'on' : ''}" style="border-radius:12px">${pv({ ...p, id: 'p' + (parseInt(p.id.slice(1)) + i) }, 'sm ' + (photo === i ? 'on' : ''))}</div>`).join('')}</div>
-          <p class="xs muted center" style="margin-top:8px">Visuels de maquette — photos réelles WebP optimisées en production</p>
+          <div style="position:relative">${pv(p, '', photo)}<div class="badges" style="position:absolute;top:16px;left:16px;display:flex;gap:6px;z-index:3">${badgesHtml(p)}</div></div>
+          <div class="thumbs">${[0, 1, 2, 3].map(i => `<div data-photo="${i}" style="border-radius:12px;cursor:pointer" role="button" aria-label="Photo ${i + 1}">${pv(p, 'sm ' + (photo === i ? 'on' : ''), i)}</div>`).join('')}</div>
+          <p class="xs muted center" style="margin-top:8px">Photo d’illustration : ${esc(DB.credits[p.id] || '—')} / Unsplash</p>
         </div>
         <div class="pdp-info">
           <a href="boutique.html?id=${v.id}" class="small" style="color:var(--primary);font-weight:600">${esc(v.nom)}</a>

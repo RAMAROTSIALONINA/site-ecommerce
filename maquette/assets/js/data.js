@@ -61,9 +61,21 @@ window.DB = (function () {
     id: r[0], sku: r[1], nom: r[2], cat: r[3], sous: r[4], vendeur: r[5], prix: r[6], promo: r[7],
     stock: r[8], seuil: r[9], note: r[10], avis: r[11], icon: r[12], variantes: r[13], badge: r[14], ventes: r[15],
     reserve: [0, 1, 0, 2, 1, 0, 3, 0, 4, 2, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 2, 0, 0, 1][i],
-    actif: true, desc: descs[r[3]], poids: '—',
+    actif: true, desc: descs[r[3]], poids: '—', img: 'assets/img/produits/' + r[0] + '.webp',
     slug: r[2].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   }));
+
+  // Photo représentative de chaque catégorie
+  const photoCat = { mode: 'p1', tech: 'p5', maison: 'p19', beaute: 'p21', epicerie: 'p9', artisanat: 'p14' };
+  categories.forEach(c => { c.photo = photoCat[c.id]; });
+
+  // Crédits photos — Unsplash (licence Unsplash : usage commercial gratuit, sans attribution obligatoire)
+  const credits = {
+    p1: 'Sandra Seitamaa', p2: 'Robert Richman', p3: 'Latico Leathers', p4: 'Ђорђе Јовичић', p5: 'Masakaze Kawakami', p6: 'Pakata Goh',
+    p7: 'Roger Cai', p8: 'I’M ZION', p9: 'sidath vimukthi', p10: 'Mockup Graphics', p11: 'Mahdi Kordi', p12: 'Pablo Merchán Montes',
+    p13: 'Nancy Hughes', p14: 'Annie Spratt', p15: 'Michael Schofield', p16: 'Ra Dragon', p17: 'Ivan Nemchinov', p18: 'Cooker King',
+    p19: 'Joel Henry', p20: 'Zulian Firmansyah', p21: 'Harrison Cohen', p22: 'Sincerely Media', p23: 'Giorgio Trovato', p24: 'Katherine Volkovski'
+  };
 
   const zones = [
     { id: 'tana-centre', nom: 'Antananarivo centre', detail: 'Communes urbaines d’Antananarivo Renivohitra', frais: 5000, delai: 'Sous 24 h', actif: true },
@@ -231,7 +243,7 @@ window.DB = (function () {
   });
 
   return {
-    categories, vendeurs, produits, zones, regions, paiements, statutsPaiement, statutsLivraison,
+    categories, vendeurs, produits, credits, zones, regions, paiements, statutsPaiement, statutsLivraison,
     clients, adresses, commandes, promos, avis, roles, utilisateurs, journal, mouvements, reversements, ventes30
   };
 })();

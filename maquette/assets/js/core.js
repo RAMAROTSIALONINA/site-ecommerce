@@ -222,8 +222,13 @@
   });
 
   // ---------- Composants ----------
-  const pv = (p, cls) => `<div class="pv ${cls || ''}" style="--h:${hueOf(p)}">${icon(p.icon)}</div>`;
-  const pvCat = c => `<div class="pv" style="--h:${c.hue}">${icon(c.icon)}</div>`;
+  // Chemin racine de la maquette (les back-offices sont un niveau plus bas)
+  const ROOT = /\/(admin|vendeur)\//.test(location.pathname) ? '../' : '';
+  // Vues de la galerie : même photo, cadrages différents (maquette)
+  const VIEWS = ['', 'transform:scale(1.35);transform-origin:20% 20%', 'transform:scale(1.5)', 'transform:scale(1.35);transform-origin:80% 80%'];
+  const photo = (src, alt, view) => `<img src="${ROOT}${src}" alt="${esc(alt)}" loading="lazy" decoding="async" style="${VIEWS[view || 0]}" onerror="this.remove()">`;
+  const pv = (p, cls, view) => `<div class="pv ${p.img ? 'has-img' : ''} ${cls || ''}" style="--h:${hueOf(p)}">${icon(p.icon)}${p.img ? photo(p.img, p.nom, view) : ''}</div>`;
+  const pvCat = c => { const p = c.photo && P(c.photo); return `<div class="pv ${p ? 'has-img' : ''}" style="--h:${c.hue}">${icon(c.icon)}${p ? photo(p.img, c.nom) : ''}</div>`; };
   const stars = n => Array.from({ length: 5 }, (_, i) => icon('star', i < Math.round(n) ? '' : 'off')).join('');
   const priceHtml = (p, lg) => `<div class="price ${lg ? 'lg' : ''}">${p.promo != null ? `<span class="now promo">${fmt(p.promo)}</span><span class="old">${fmt(p.prix)}</span>` : `<span class="now">${fmt(p.prix)}</span>`}</div>`;
   function stockHtml(p) {

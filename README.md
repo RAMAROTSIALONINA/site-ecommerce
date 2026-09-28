@@ -32,6 +32,18 @@ En local : ouvrir `maquette/index.html` dans un navigateur, ou lancer
 Fond clair et translucide (verre dépoli), couleur primaire `#0F766E`, accent promotion `#EA580C`,
 typographies Plus Jakarta Sans et Inter. Points de rupture : < 768 px, 768–1199 px, ≥ 1200 px.
 
+## Photos
+
+Les 24 photos produits (`maquette/assets/img/produits/p1.webp` … `p24.webp`, 600 × 600 px, WebP) proviennent
+d’[Unsplash](https://unsplash.com) sous [licence Unsplash](https://unsplash.com/license) (usage commercial gratuit,
+attribution non obligatoire). Crédits : Sandra Seitamaa, Robert Richman, Latico Leathers, Ђорђе Јовичић,
+Masakaze Kawakami, Pakata Goh, Roger Cai, I’M ZION, sidath vimukthi, Mockup Graphics, Mahdi Kordi,
+Pablo Merchán Montes, Nancy Hughes, Annie Spratt, Michael Schofield, Ra Dragon, Ivan Nemchinov, Cooker King,
+Joel Henry, Zulian Firmansyah, Harrison Cohen, Sincerely Media, Giorgio Trovato, Katherine Volkovski.
+
+Pour utiliser les vraies photos des vendeurs : remplacer le fichier `pN.webp` correspondant en gardant
+le même nom (format carré conseillé), sans modifier le code. Si une image est absente, l’icône de la catégorie s’affiche.
+
 ## Technique
 
 HTML / CSS / JavaScript sans dépendance ni build. Les données de démonstration sont dans

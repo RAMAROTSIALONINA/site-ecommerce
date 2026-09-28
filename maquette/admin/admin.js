@@ -162,7 +162,7 @@
               ${field('Sous-catégorie', 'sous', p.sous, { type: 'select', rule: 'req', options: [['', 'Choisir…']].concat((C(p.cat) || { sous: [] }).sous) })}
               ${field('Description', 'desc', p.desc, { type: 'textarea', rule: 'req', cls: 'span-2' })}</div>`)}
             ${panel('Images', `<div class="upload-zone" data-upload>${icon('image', 'lg')}<div><b>Glissez vos photos ici</b> ou cliquez pour parcourir</div><div class="xs">JPG, PNG ou WebP · 5 Mo max · converties en WebP et redimensionnées automatiquement</div></div>
-              <div class="img-grid">${isNew ? '' : [0, 1, 2, 3].map(i => pv({ ...p, id: 'p' + (parseInt(p.id.slice(1)) + i) }, 'sm')).join('')}</div>`)}
+              <div class="img-grid">${isNew ? '' : [0, 1, 2, 3].map(i => pv(p, 'sm', i)).join('')}</div>`)}
             ${panel('Variantes', `<p class="small muted" style="margin-top:0">Ex. Taille : S, M, L — le client devra choisir avant l’ajout au panier.</p>
               <div id="vars">${(vars.length ? vars : [['', []]]).map(([k, vs]) => `<div class="form-grid two" style="margin-bottom:10px"><div class="field"><label>Option</label><input class="input" name="vk" value="${esc(k)}" placeholder="Taille, Couleur…"></div><div class="field"><label>Valeurs (séparées par des virgules)</label><input class="input" name="vv" value="${esc(vs.join(', '))}" placeholder="S, M, L"></div></div>`).join('')}</div>
               <button type="button" class="btn btn-sm" data-addvar>${icon('plus', 'sm')} Ajouter une option</button>`)}
