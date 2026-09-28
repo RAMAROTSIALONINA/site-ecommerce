@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mon panier — Site E_commerce</title>
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="panier">
+  <div id="app-header"></div>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>Panier</span></nav>
+    <div class="page-title"><h1>Mon panier</h1><span class="muted small" id="count"></span></div>
+    <div id="cart"></div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, fmt, esc, pv, Cart, dispo, store, applyPromo, toast, confirmBox, stockHtml } = App;
+
+    // Panier de démonstration si vide à la première visite
+    if (!store.get('cartSeeded', false) && !Cart.items().length) {
+      Cart.save([{ id: 'p9', qte: 1, variante: null }, { id: 'p11', qte: 2, variante: null }, { id: 'p1', qte: 1, variante: 'M' }, { id: 'p7', qte: 1, variante: 'Blanc' }]);
+      store.set('cartSeeded', true);
+    }
+
+    function totals(lines) {
+      const sousTotal = lines.reduce((s, l) => s + l.total, 0);
+      let remise = 0, promo = null, promoErr = null;
+      const code = store.get('promo', null);
+      if (code) { const r = applyPromo(code, lines); if (r.ok) { remise = r.remise; promo = r.promo; } else { promoErr = r.msg; } }
+      const zone = App.Z(store.get('zone', 'tana-centre'));
+      return { sousTotal, remise, promo, promoErr, zone, frais: lines.length ? zone.frais : 0, total: sousTotal - remise + (lines.length ? zone.frais : 0) };
+    }
+
+    function render() {
+      const lines = Cart.detail();
+      const n = lines.reduce((s, l) => s + l.qte, 0);
+      document.getElementById('count').textContent = n ? n + ' article' + (n > 1 ? 's' : '') : '';
+      if (!lines.length) {
+        document.getElementById('cart').innerHTML = `<div class="empty card">${icon('cart')}<h3>Votre panier est vide</h3><p class="muted">Parcourez nos catégories et découvrez les produits de nos vendeurs.</p><a class="btn btn-primary" href="catalogue.html">Continuer mes achats</a></div>`;
+        return;
+      }
+      const groups = {};
+      lines.forEach(l => { (groups[l.p.vendeur] = groups[l.p.vendeur] || []).push(l); });
+      const t = totals(lines);
+      const problems = lines.filter(l => l.qte > dispo(l.p));
+
+      document.getElementById('cart').innerHTML = `<div class="cart-layout">
+        <div>
+          ${problems.length ? `<div class="alert alert-danger" style="margin-bottom:14px">${icon('alert')}<span>Stock insuffisant pour ${problems.map(l => '« ' + esc(l.p.nom) + ' »').join(', ')}. Ajustez les quantités pour poursuivre.</span></div>` : ''}
+          ${Object.entries(groups).map(([vid, ls]) => { const v = App.V(vid); return `
+          <div class="card vendor-group">
+            <div class="vendor-group-head">${icon('store', 'sm')}<span>Vendu par <a href="boutique.html?id=${v.id}" style="font-weight:600;color:var(--primary-700)">${esc(v.nom)}</a></span><span class="muted xs" style="margin-left:auto">Expédié depuis ${v.ville}</span></div>
+            ${ls.map(l => `<div class="cart-line">
+              <a href="produit.html?id=${l.p.id}">${pv(l.p, 'sm')}</a>
+              <div style="min-width:0">
+                <a class="cl-name" href="produit.html?id=${l.p.id}">${esc(l.p.nom)}</a>
+                <div class="xs muted">${l.variante ? esc(l.variante) + ' · ' : ''}Réf. ${l.p.sku}</div>
+                <div style="margin-top:4px">${l.qte > dispo(l.p) ? `<span class="stock out">Seulement ${dispo(l.p)} disponible(s)</span>` : stockHtml(l.p)}</div>
+                <div class="small" style="margin-top:4px">${fmt(l.prix)} / unité ${l.p.promo != null ? `<span class="muted" style="text-decoration:line-through">${fmt(l.p.prix)}</span>` : ''}</div>
+              </div>
+              <div class="cl-actions">
+                <div class="qty sm"><button data-dq="-1" data-k="${l.k}" aria-label="Diminuer">${icon('minus', 'sm')}</button><input value="${l.qte}" data-k="${l.k}" inputmode="numeric" aria-label="Quantité"><button data-dq="1" data-k="${l.k}" aria-label="Augmenter">${icon('plus', 'sm')}</button></div>
+                <button class="btn btn-ghost btn-sm" data-rm="${l.k}">${icon('trash', 'sm')} Retirer</button>
+              </div>
+              <div class="right bold nowrap" style="font-family:var(--font-title)">${fmt(l.total)}</div>
+            </div>`).join('')}
+          </div>`; }).join('')}
+          <div class="row between wrap"><a class="btn btn-ghost" href="catalogue.html">${icon('chevron-left', 'sm')} Continuer mes achats</a><button class="btn btn-ghost" data-clear>${icon('trash', 'sm')} Vider le panier</button></div>
+        </div>
+
+        <aside class="card card-pad summary">
+          <h3>Récapitulatif</h3>
+          <div class="sum-row"><span>Sous-total (${n} article${n > 1 ? 's' : ''})</span><b>${fmt(t.sousTotal)}</b></div>
+          ${t.remise ? `<div class="sum-row"><span>Remise <span class="badge badge-success">${t.promo.code}</span> <button class="btn btn-ghost btn-sm" data-unpromo style="min-height:24px;padding:0 6px" aria-label="Retirer le code">${icon('x', 'sm')}</button></span><span class="discount">− ${fmt(t.remise)}</span></div>` : ''}
+          <div class="field" style="margin:10px 0">
+            <label for="zone">Livraison estimée</label>
+            <select class="select" id="zone">${DB.zones.filter(z => z.actif).map(z => `<option value="${z.id}" ${z.id === t.zone.id ? 'selected' : ''}>${z.nom} — ${z.frais ? fmt(z.frais) : 'Gratuit'}</option>`).join('')}</select>
+            <span class="hint">${t.zone.delai} · un seul frais par commande, même avec plusieurs vendeurs</span>
+          </div>
+          <div class="sum-row"><span>Frais de livraison</span><b>${t.frais ? fmt(t.frais) : 'Gratuit'}</b></div>
+          <div class="sum-row total"><span>Total</span><span>${fmt(t.total)}</span></div>
+          <div class="promo-input"><input class="input" id="code" placeholder="Code promo" aria-label="Code promo"><button class="btn" data-promo>Appliquer</button></div>
+          ${t.promoErr ? `<div class="alert alert-warning" style="margin-bottom:10px">${icon('alert')}<span>${t.promoErr}</span></div>` : ''}
+          <p class="xs muted" style="margin:-4px 0 12px">Essayez : BIENVENUE10, TANA5000, SAVA15</p>
+          <button class="btn btn-primary btn-lg btn-block" data-checkout ${problems.length ? 'disabled' : ''}>${icon('lock', 'sm')} Passer la commande</button>
+          <div class="row wrap" style="gap:6px;margin-top:14px;justify-content:center">
+            <span class="pay-logo" style="background:#E30613;color:#fff;font-size:.68rem;font-weight:700;padding:4px 8px;border-radius:6px">MVola</span>
+            <span class="pay-logo" style="background:#FF7900;color:#fff;font-size:.68rem;font-weight:700;padding:4px 8px;border-radius:6px">Orange Money</span>
+            <span class="pay-logo" style="background:#D6001C;color:#fff;font-size:.68rem;font-weight:700;padding:4px 8px;border-radius:6px">Airtel Money</span>
+            <span class="pay-logo" style="background:#0F172A;color:#fff;font-size:.68rem;font-weight:700;padding:4px 8px;border-radius:6px">Carte</span>
+          </div>
+          <p class="xs muted center" style="margin:10px 0 0">${icon('shield', 'sm')} Paiement sécurisé · stock vérifié à la validation</p>
+        </aside>
+      </div>`;
+    }
+
+    function setQ(k, n) { const r = Cart.setQty(k, n); if (!r.ok && r.msg) toast(r.msg, 'error'); render(); }
+    document.addEventListener('click', e => {
+      const d = e.target.closest('[data-dq]'); if (d) { const it = Cart.detail().find(l => l.k === d.dataset.k); const n = it.qte + +d.dataset.dq; if (n < 1) return; setQ(d.dataset.k, n); }
+      const r = e.target.closest('[data-rm]'); if (r) { const it = Cart.detail().find(l => l.k === r.dataset.rm); Cart.remove(r.dataset.rm); render(); toast('« ' + esc(it.p.nom) + ' » retiré du panier'); }
+      if (e.target.closest('[data-clear]')) confirmBox('Vider le panier ?', '<p>Tous les articles seront retirés de votre panier.</p>', () => { Cart.clear(); render(); }, { yes: 'Vider le panier', yesCls: 'btn-danger', tone: 'danger' });
+      if (e.target.closest('[data-promo]')) {
+        const code = document.getElementById('code').value.trim().toUpperCase();
+        if (!code) { toast('Saisissez un code promo.', 'error'); return; }
+        const res = applyPromo(code, Cart.detail());
+        if (!res.ok) { toast(res.msg, 'error'); return; }
+        store.set('promo', code); render(); toast('Code ' + code + ' appliqué : − ' + fmt(res.remise));
+      }
+      if (e.target.closest('[data-unpromo]')) { store.set('promo', null); render(); }
+      if (e.target.closest('[data-checkout]')) {
+        const bad = Cart.detail().filter(l => l.qte > dispo(l.p));
+        if (bad.length) { render(); return; }
+        location.href = App.User.logged() ? 'commande.html' : 'connexion.html?next=commande.html';
+      }
+    });
+    document.addEventListener('change', e => {
+      if (e.target.id === 'zone') { store.set('zone', e.target.value); render(); }
+      if (e.target.matches('.qty input')) { const n = parseInt(e.target.value, 10); if (!Number.isInteger(n) || n < 1) { toast('Quantité invalide (minimum 1).', 'error'); render(); return; } setQ(e.target.dataset.k, n); }
+    });
+    render();
+  </script>
+</body>
+</html>

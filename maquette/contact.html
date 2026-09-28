@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Contact & aide — Site E_commerce</title>
+  <meta name="description" content="Contactez le service client Site E_commerce : téléphone, WhatsApp, e-mail et questions fréquentes.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="contact">
+  <div id="app-header"></div>
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>Contact</span></nav>
+    <div class="page-title"><h1>Comment pouvons-nous vous aider ?</h1></div>
+    <div class="trust-bar" id="channels" style="margin:0 0 24px"></div>
+    <div class="cart-layout">
+      <form class="card card-pad" id="f" novalidate>
+        <h2 style="font-size:1.25rem">Envoyer un message</h2>
+        <div class="form-grid two" style="margin-top:12px">
+          <div class="field"><label>Nom complet <span class="req">*</span></label><input class="input" name="nom" data-rule="req"><span class="err"></span></div>
+          <div class="field"><label>Téléphone <span class="req">*</span></label><input class="input" name="tel" type="tel" inputmode="tel" data-rule="req tel" placeholder="034 12 345 67"><span class="err"></span></div>
+          <div class="field"><label>E-mail</label><input class="input" name="email" type="email" data-rule="email"><span class="err"></span></div>
+          <div class="field"><label>Sujet <span class="req">*</span></label><select class="select" name="sujet" data-rule="req"><option value="">Choisir…</option><option>Suivi de commande</option><option>Paiement</option><option>Retour / remboursement</option><option>Devenir vendeur</option><option>Autre</option></select><span class="err"></span></div>
+          <div class="field span-2"><label>N° de commande</label><input class="input" name="cmd" id="cmd" placeholder="CMD-2026-…"></div>
+          <div class="field span-2"><label>Message <span class="req">*</span></label><textarea class="textarea" name="msg" data-rule="req"></textarea><span class="err"></span></div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="margin-top:16px">Envoyer</button>
+      </form>
+      <aside class="card card-pad"><h3>Questions fréquentes</h3><div id="faq"></div></aside>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, validate, modal } = App;
+    if (App.qs('commande')) { document.getElementById('cmd').value = App.qs('commande'); document.querySelector('[name=sujet]').value = 'Suivi de commande'; }
+    document.getElementById('channels').innerHTML = [['call', 'Téléphone', '+261 34 00 000 00 · Lun–Sam 8 h–18 h'], ['message', 'WhatsApp', '+261 34 00 000 00'], ['mail', 'E-mail', 'contact@site-ecommerce.mg'], ['pin', 'Point relais', 'Analakely, Antananarivo']]
+      .map(t => `<div class="trust-item glass"><span class="ti-ico">${icon(t[0])}</span><div><b>${t[1]}</b><span>${t[2]}</span></div></div>`).join('');
+    const faq = [
+      ['Comment payer avec MVola, Orange Money ou Airtel Money ?', 'Choisissez le service à l’étape paiement, saisissez votre numéro, puis validez la demande reçue sur votre téléphone avec votre code secret.'],
+      ['Combien coûte la livraison ?', 'De 5 000 Ar (Antananarivo centre) à 25 000 Ar (régions éloignées). Retrait gratuit au point relais d’Analakely.'],
+      ['Ma commande contient plusieurs vendeurs, vais-je payer plusieurs livraisons ?', 'Non : les colis sont regroupés et un seul frais de livraison s’applique.'],
+      ['Comment suivre ma commande ?', 'Depuis « Mon compte › Mes commandes ». Vous recevez aussi un SMS à chaque étape.'],
+      ['Puis-je annuler ma commande ?', 'Oui, gratuitement tant qu’elle n’est pas expédiée. Si vous avez déjà payé, le remboursement est effectué sous 72 h.']
+    ];
+    document.getElementById('faq').innerHTML = faq.map(f => `<details style="border-bottom:1px solid var(--line);padding:12px 0"><summary style="cursor:pointer;font-weight:600;font-size:.92rem">${f[0]}</summary><p class="small text-2" style="margin:8px 0 0">${f[1]}</p></details>`).join('');
+    document.getElementById('f').addEventListener('submit', e => { e.preventDefault(); if (!validate(e.target)) return;
+      modal({ title: 'Message envoyé', tone: 'success', body: '<p>Merci ! Ticket <b>SAV-2026-0' + (4000 + Math.floor(Math.random() * 900)) + '</b> créé. Nous vous répondons sous 24 h ouvrées.</p>', actions: [{ label: 'Fermer', cls: 'btn-primary' }] }); e.target.reset(); });
+  </script>
+</body>
+</html>

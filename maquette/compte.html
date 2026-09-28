@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mon compte — Site E_commerce</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="compte">
+  <div id="app-header"></div>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>Mon compte</span></nav>
+    <div class="account" style="margin-top:10px">
+      <aside class="card acc-nav" id="nav"></aside>
+      <section id="view"></section>
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, fmt, fmtDate, esc, pv, P, V, Z, PAY, Orders, Favs, store, toast, modal, confirmBox, validate, statusPill, productCard } = App;
+    if (!App.User.logged()) location.href = 'connexion.html?next=compte.html';
+    const user = App.User.get();
+    const addrs = () => store.get('adresses', DB.adresses.filter(a => a.client === 'c1'));
+
+    const NAV = [['tableau', 'grid', 'Tableau de bord'], ['commandes', 'package', 'Mes commandes'], ['paiements', 'card', 'Mes paiements'], ['adresses', 'pin', 'Mes adresses'], ['favoris', 'heart', 'Favoris'], ['avis', 'star', 'Mes avis'], ['profil', 'user', 'Profil & sécurité']];
+    function nav(cur) {
+      document.getElementById('nav').innerHTML = `<div class="acc-user"><div class="avatar">${App.initials(user.prenom + ' ' + user.nom)}</div><div><b>${esc(user.prenom)} ${esc(user.nom)}</b><div class="xs muted">Client depuis mars 2025</div></div></div>
+        ${NAV.map(n => `<a href="#${n[0]}" class="${cur === n[0] ? 'on' : ''}">${icon(n[1])} ${n[2]}</a>`).join('')}
+        <a href="#" data-logout style="color:var(--danger)">${icon('logout')} Déconnexion</a>`;
+    }
+    const lastStatus = o => o.statutLivraison === 'livree' ? 4 : o.statutLivraison === 'en_livraison' ? 3 : o.statutLivraison === 'expediee' ? 2 : ['paye'].includes(o.statutPaiement) || o.paiement === 'cod' ? 1 : 0;
+    const trackBar = o => { const n = ['annulee', 'retour'].includes(o.statutLivraison) ? -1 : lastStatus(o); return `<div class="track-steps">${['Confirmée', 'Préparée', 'Expédiée', 'En livraison', 'Livrée'].map((s, i) => `<div class="${i <= n ? 'done' : ''}">${s}</div>`).join('')}</div>`; };
+    const nbArt = o => o.lignes.reduce((s, l) => s + l.qte, 0);
+
+    function orderCard(o) {
+      return `<div class="card order-card">
+        <div class="row between wrap"><div><b>${o.numero}</b><div class="xs muted">${o.date === 'maintenant' ? 'À l’instant' : fmtDate(o.date)} · ${nbArt(o)} article(s) · ${new Set(o.lignes.map(l => l.vendeur)).size} vendeur(s)</div></div>
+          <div class="row wrap" style="gap:6px">${statusPill('statutsPaiement', o.statutPaiement)}${statusPill('statutsLivraison', o.statutLivraison)}</div></div>
+        <div class="row" style="gap:8px;overflow:hidden">${o.lignes.slice(0, 5).map(l => `<div style="width:56px;flex:none">${pv(P(l.produit), 'sm')}</div>`).join('')}</div>
+        ${trackBar(o)}
+        <div class="row between wrap"><b style="font-family:var(--font-title)">${fmt(o.total)}</b><div class="row" style="gap:8px"><a class="btn btn-sm" href="facture.html?id=${o.numero}">${icon('file', 'sm')} Facture</a><a class="btn btn-sm btn-primary" href="#commande=${o.numero}">Détail & suivi</a></div></div>
+      </div>`;
+    }
+
+    const V_ = {
+      tableau() {
+        const os = Orders.mine();
+        const enCours = os.filter(o => !['livree', 'annulee', 'retour'].includes(o.statutLivraison));
+        return `<div class="page-title"><h1>Bonjour ${esc(user.prenom)} 👋</h1></div>
+          <div class="kpi-mini"><div class="card"><b>${os.length}</b><span>Commandes</span></div><div class="card"><b>${enCours.length}</b><span>En cours</span></div><div class="card"><b>${Favs.all().length}</b><span>Favoris</span></div><div class="card"><b>${fmt(os.filter(o => o.statutPaiement === 'paye').reduce((s, o) => s + o.total, 0))}</b><span>Total dépensé</span></div></div>
+          <div class="section-head" style="margin-top:26px"><h2 style="font-size:1.2rem">Commandes en cours</h2><a href="#commandes">Toutes mes commandes</a></div>
+          ${enCours.length ? enCours.slice(0, 2).map(orderCard).join('') : '<div class="card card-pad muted">Aucune commande en cours.</div>'}
+          <div class="form-grid two" style="margin-top:20px">
+            <div class="card card-pad"><div class="row between"><h3 style="margin:0">Adresse par défaut</h3><a href="#adresses" class="small" style="color:var(--primary);font-weight:600">Gérer</a></div>${(() => { const a = addrs().find(x => x.defaut) || addrs()[0]; return a ? `<p class="small text-2" style="margin:10px 0 0">${esc(a.nom)}<br>${esc(a.adresse)}, ${esc(a.fokontany)}<br>${esc(a.commune)} — ${esc(a.ville)}<br>${a.tel}</p>` : '<p class="muted">Aucune adresse.</p>'; })()}</div>
+            <div class="card card-pad"><div class="row between"><h3 style="margin:0">Mes informations</h3><a href="#profil" class="small" style="color:var(--primary);font-weight:600">Modifier</a></div><p class="small text-2" style="margin:10px 0 0">${esc(user.prenom)} ${esc(user.nom)}<br>${esc(user.email)}<br>${esc(user.tel)}</p></div>
+          </div>`;
+      },
+      commandes() {
+        const os = Orders.mine();
+        return `<div class="page-title"><h1>Mes commandes</h1><span class="muted small">${os.length} commande(s)</span></div>
+          <div class="row wrap" style="gap:8px;margin-bottom:14px">${['Toutes', 'En cours', 'Livrées', 'Annulées'].map((f, i) => `<button class="chip ${i === 0 ? 'active' : ''}" data-of="${i}">${f}</button>`).join('')}</div>
+          <div id="olist">${os.map(orderCard).join('')}</div>`;
+      },
+      commande(num) {
+        const o = Orders.find(num);
+        if (!o) return `<div class="empty card">${icon('package')}<h3>Commande introuvable</h3><a class="btn btn-primary" href="#commandes">Mes commandes</a></div>`;
+        const a = o.adresse || DB.adresses[0]; const z = Z(o.zone); const p = PAY(o.paiement);
+        const groups = {}; o.lignes.forEach(l => { (groups[l.vendeur] = groups[l.vendeur] || []).push(l); });
+        const annulable = o.statutLivraison === 'a_preparer' && !['annule', 'rembourse', 'echoue'].includes(o.statutPaiement);
+        const failed = ['annulee', 'retour'].includes(o.statutLivraison);
+        const steps = [['Commande créée', true], ['Paiement ' + (o.paiement === 'cod' ? 'à la livraison' : 'confirmé'), o.statutPaiement === 'paye' || o.paiement === 'cod'], ['Préparée par les vendeurs', lastStatus(o) >= 2], ['Expédiée / remise au livreur', lastStatus(o) >= 3], ['Livrée', lastStatus(o) >= 4]];
+        const cur = steps.findIndex(s => !s[1]);
+        return `<a href="#commandes" class="small" style="color:var(--primary);font-weight:600">${icon('chevron-left', 'sm')} Mes commandes</a>
+          <div class="page-title" style="margin-top:8px"><h1 style="font-size:1.5rem">Commande ${o.numero}</h1><div class="row wrap" style="gap:6px">${statusPill('statutsPaiement', o.statutPaiement)}${statusPill('statutsLivraison', o.statutLivraison)}</div></div>
+          <div class="cart-layout">
+            <div>
+              <div class="card card-pad" style="margin-bottom:14px"><h3>Suivi de la commande</h3>
+                <ul class="timeline" style="margin-top:14px">${failed ? o.historique.map((h, i) => `<li class="${i === o.historique.length - 1 ? 'fail' : 'done'}"><span class="tl-dot">${icon(i === o.historique.length - 1 ? 'x' : 'check')}</span><b>${h.statut}</b><span>${h.date === 'maintenant' ? 'À l’instant' : fmtDate(h.date)} · ${h.par}</span></li>`).join('')
+                  : steps.map((s, i) => `<li class="${s[1] ? 'done' : i === cur ? 'current' : ''}"><span class="tl-dot">${s[1] ? icon('check') : ''}</span><b>${s[0]}</b><span>${s[1] ? (i === 0 ? (o.date === 'maintenant' ? 'À l’instant' : fmtDate(o.date)) : 'Effectué') : i === cur ? 'En cours' : 'À venir'}</span></li>`).join('')}</ul>
+                ${o.statutLivraison === 'en_livraison' ? `<div class="alert alert-info">${icon('truck')}<span>Votre livreur <b>Tojo R.</b> est en route · <a href="#" style="font-weight:700">+261 34 00 900 12</a></span></div>` : ''}
+              </div>
+              ${Object.entries(groups).map(([vid, ls]) => `<div class="card vendor-group"><div class="vendor-group-head">${icon('store', 'sm')} Colis ${esc(V(vid).nom)}<span class="xs muted" style="margin-left:auto">Sous-commande ${o.numero}-${vid.toUpperCase()}</span></div>
+                ${ls.map(l => { const pr = P(l.produit); return `<div class="cart-line" style="grid-template-columns:64px 1fr auto"><div>${pv(pr, 'sm')}</div><div><a href="produit.html?id=${pr.id}" class="bold small">${esc(pr.nom)}</a><div class="xs muted">${l.variante ? esc(l.variante) + ' · ' : ''}${l.qte} × ${fmt(l.prix)}</div>${o.statutLivraison === 'livree' ? `<a href="produit.html?id=${pr.id}" class="xs" style="color:var(--primary);font-weight:600">${icon('star', 'sm')} Noter ce produit</a>` : ''}</div><b class="small">${fmt(l.qte * l.prix)}</b></div>`; }).join('')}</div>`).join('')}
+            </div>
+            <aside>
+              <div class="card card-pad" style="margin-bottom:14px"><h3>Montant</h3>
+                <div class="sum-row"><span>Sous-total</span><b>${fmt(o.sousTotal)}</b></div>
+                ${o.remise ? `<div class="sum-row"><span>Remise ${o.codePromo}</span><span class="discount">− ${fmt(o.remise)}</span></div>` : ''}
+                <div class="sum-row"><span>Livraison</span><b>${o.frais ? fmt(o.frais) : 'Gratuit'}</b></div>
+                <div class="sum-row total"><span>Total</span><span>${fmt(o.total)}</span></div>
+                <p class="small text-2" style="margin:10px 0 0">${icon('card', 'sm')} ${p.nom}${o.refPaiement ? ' · réf. ' + o.refPaiement : ''}</p></div>
+              <div class="card card-pad" style="margin-bottom:14px"><h3>Livraison</h3><p class="small text-2" style="margin:0">${esc(a.nom)} · ${a.tel}<br>${esc(a.adresse)}, ${esc(a.fokontany)}<br>${esc(a.commune)} — ${esc(a.ville)}<br><span class="muted">Repère : ${esc(a.repere || '—')}</span><br><b>${z.nom}</b> · ${z.delai}</p></div>
+              <div class="stack">
+                <a class="btn btn-block" href="facture.html?id=${o.numero}">${icon('download', 'sm')} Télécharger la facture</a>
+                ${o.statutLivraison === 'livree' ? `<button class="btn btn-block" data-retour="${o.numero}">${icon('refresh', 'sm')} Demander un retour</button>` : ''}
+                ${annulable ? `<button class="btn btn-block btn-danger" data-cancel="${o.numero}">${icon('x', 'sm')} Annuler la commande</button>` : ''}
+                <a class="btn btn-block btn-ghost" href="contact.html?commande=${o.numero}">${icon('message', 'sm')} Contacter le service client</a>
+              </div>
+            </aside>
+          </div>`;
+      },
+      paiements() {
+        const os = Orders.mine();
+        return `<div class="page-title"><h1>Mes paiements</h1></div>
+          <div class="card table-wrap"><table class="table"><thead><tr><th>Date</th><th>Commande</th><th>Moyen</th><th>Référence</th><th class="right">Montant</th><th>Statut</th></tr></thead><tbody>
+          ${os.map(o => `<tr><td class="nowrap">${o.date === 'maintenant' ? 'Aujourd’hui' : fmtDate(o.date.split(' ')[0])}</td><td><a href="#commande=${o.numero}" style="color:var(--primary);font-weight:600">${o.numero}</a></td><td>${PAY(o.paiement).nom}</td><td class="muted small">${o.refPaiement || '—'}</td><td class="right bold nowrap">${fmt(o.total)}</td><td>${statusPill('statutsPaiement', o.statutPaiement)}</td></tr>`).join('')}
+          </tbody></table></div>`;
+      },
+      adresses() {
+        return `<div class="page-title"><h1>Mes adresses</h1><button class="btn btn-primary" data-addr="new">${icon('plus', 'sm')} Ajouter une adresse</button></div>
+          <div class="form-grid two">${addrs().map(a => `<div class="card card-pad"><div class="row between"><b>${esc(a.libelle)}</b>${a.defaut ? '<span class="badge badge-primary">Par défaut</span>' : ''}</div>
+            <p class="small text-2" style="margin:10px 0">${esc(a.nom)} · ${a.tel}<br>${esc(a.adresse)}<br>Fokontany ${esc(a.fokontany)}, ${esc(a.commune)}<br>${esc(a.ville)} — ${esc(a.region)}<br><span class="muted">Repère : ${esc(a.repere || '—')}</span></p>
+            <div class="row" style="gap:6px"><button class="btn btn-sm" data-addr="${a.id}">${icon('edit', 'sm')} Modifier</button>${a.defaut ? '' : `<button class="btn btn-sm btn-ghost" data-default="${a.id}">Définir par défaut</button><button class="btn btn-sm btn-ghost" data-deladdr="${a.id}" style="color:var(--danger)">${icon('trash', 'sm')}</button>`}</div></div>`).join('')}</div>`;
+      },
+      favoris() {
+        const f = Favs.all().map(P).filter(Boolean);
+        return `<div class="page-title"><h1>Mes favoris</h1><span class="muted small">${f.length} produit(s)</span></div>
+          ${f.length ? `<div class="grid-products">${f.map(p => productCard(p)).join('')}</div>` : `<div class="empty card">${icon('heart')}<h3>Aucun favori</h3><p class="muted">Touchez le cœur sur un produit pour le retrouver ici.</p><a class="btn btn-primary" href="catalogue.html">Découvrir</a></div>`}`;
+      },
+      avis() {
+        const mine = DB.avis.filter(a => a.client === 'Hery R.');
+        return `<div class="page-title"><h1>Mes avis</h1></div>${mine.map(r => { const p = P(r.produit); return `<div class="card card-pad row" style="gap:14px;align-items:flex-start"><div style="width:64px;flex:none">${pv(p, 'sm')}</div><div class="grow"><b class="small">${esc(p.nom)}</b><div class="stars" style="margin:4px 0">${App.stars(r.note)}</div><p class="small text-2" style="margin:0">${esc(r.texte)}</p><span class="badge badge-warning" style="margin-top:8px">En attente de modération</span></div></div>`; }).join('')}
+          <div class="card card-pad" style="margin-top:14px"><h3>Produits à noter</h3><p class="small muted">Commandes livrées récemment</p>${Orders.mine().filter(o => o.statutLivraison === 'livree').flatMap(o => o.lignes).slice(0, 3).map(l => { const p = P(l.produit); return `<div class="mini-line">${pv(p, 'sm')}<span class="grow">${esc(p.nom)}</span><a class="btn btn-sm" href="produit.html?id=${p.id}">Noter</a></div>`; }).join('')}</div>`;
+      },
+      profil() {
+        return `<div class="page-title"><h1>Profil & sécurité</h1></div>
+          <form class="card card-pad" id="f-profil" novalidate><h3>Informations personnelles</h3>
+            <div class="form-grid two" style="margin-top:12px">
+              <div class="field"><label>Prénom <span class="req">*</span></label><input class="input" name="prenom" data-rule="req" value="${esc(user.prenom)}"><span class="err"></span></div>
+              <div class="field"><label>Nom <span class="req">*</span></label><input class="input" name="nom" data-rule="req" value="${esc(user.nom)}"><span class="err"></span></div>
+              <div class="field"><label>Téléphone <span class="req">*</span></label><input class="input" name="tel" type="tel" data-rule="req tel" value="${esc(user.tel)}"><span class="err"></span></div>
+              <div class="field"><label>E-mail</label><input class="input" name="email" type="email" data-rule="email" value="${esc(user.email)}"><span class="err"></span></div>
+            </div>
+            <h3 style="margin-top:20px">Préférences de notification</h3>
+            <div class="stack">${['Suivi de commande par SMS', 'Suivi de commande par e-mail', 'Notifications WhatsApp', 'Offres et promotions'].map((n, i) => `<label class="check"><input type="checkbox" ${i < 2 ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+            <button class="btn btn-primary" style="margin-top:18px">Enregistrer</button></form>
+          <form class="card card-pad" id="f-pwd" style="margin-top:14px" novalidate><h3>Mot de passe</h3>
+            <div class="form-grid two" style="margin-top:12px">
+              <div class="field span-2"><label>Mot de passe actuel <span class="req">*</span></label><input class="input" type="password" name="old" data-rule="req"><span class="err"></span></div>
+              <div class="field"><label>Nouveau mot de passe <span class="req">*</span></label><input class="input" type="password" name="n1" data-rule="req pwd"><span class="err"></span></div>
+              <div class="field"><label>Confirmation <span class="req">*</span></label><input class="input" type="password" name="n2" data-rule="req"><span class="err"></span></div>
+            </div><button class="btn" style="margin-top:14px">Changer le mot de passe</button></form>
+          <div class="card card-pad" style="margin-top:14px"><h3>Données personnelles</h3><p class="small text-2">Vous pouvez demander l’export ou la suppression de vos données.</p><div class="row wrap"><button class="btn btn-sm" data-export>${icon('download', 'sm')} Exporter mes données</button><button class="btn btn-sm btn-danger" data-delacc>Supprimer mon compte</button></div></div>`;
+      }
+    };
+
+    function route() {
+      const h = decodeURIComponent(location.hash.slice(1)) || 'tableau';
+      let html, cur = h;
+      if (h.startsWith('commande=')) { html = V_.commande(h.split('=')[1]); cur = 'commandes'; }
+      else html = (V_[h] || V_.tableau)();
+      nav(cur); document.getElementById('view').innerHTML = html; scrollTo({ top: 0 });
+    }
+
+    function addrModal(id) {
+      const a = addrs().find(x => x.id === id) || { libelle: '', nom: user.prenom + ' ' + user.nom, tel: user.tel, region: 'Analamanga', ville: '', commune: '', fokontany: '', adresse: '', repere: '' };
+      const f = (l, n, r, v) => `<div class="field"><label>${l}${r ? ' <span class="req">*</span>' : ''}</label><input class="input" name="${n}" ${r ? `data-rule="${r}"` : ''} value="${esc(v)}"><span class="err"></span></div>`;
+      modal({ title: id === 'new' ? 'Nouvelle adresse' : 'Modifier l’adresse', noIcon: true, wide: true,
+        body: `<form id="f-addr" class="form-grid two" novalidate>${f('Libellé (ex. Domicile)', 'libelle', 'req', a.libelle)}${f('Nom complet', 'nom', 'req', a.nom)}${f('Téléphone', 'tel', 'req tel', a.tel)}
+          <div class="field"><label>Région <span class="req">*</span></label><select class="select" name="region" data-rule="req">${DB.regions.map(r => `<option ${a.region === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+          ${f('Ville', 'ville', 'req', a.ville)}${f('Commune', 'commune', 'req', a.commune)}${f('Fokontany', 'fokontany', 'req', a.fokontany)}${f('Adresse', 'adresse', 'req', a.adresse)}
+          <div class="field span-2"><label>Point de repère</label><input class="input" name="repere" value="${esc(a.repere)}"></div></form>`,
+        actions: [{ label: 'Annuler' }, { label: 'Enregistrer', cls: 'btn-primary', onClick(bd) {
+          const form = bd.querySelector('form'); if (!validate(form)) return false;
+          const d = Object.fromEntries(new FormData(form).entries()); const l = addrs();
+          if (id === 'new') l.push({ ...d, id: 'a' + Date.now(), client: 'c1', defaut: !l.length }); else Object.assign(l.find(x => x.id === id), d);
+          store.set('adresses', l); route(); toast('Adresse enregistrée');
+        } }] });
+    }
+
+    document.addEventListener('click', e => {
+      if (e.target.closest('[data-logout]')) { e.preventDefault(); confirmBox('Se déconnecter ?', '<p>Votre panier sera conservé sur cet appareil.</p>', () => { App.User.logout(); location.href = 'index.html'; }); }
+      const ad = e.target.closest('[data-addr]'); if (ad) addrModal(ad.dataset.addr);
+      const df = e.target.closest('[data-default]'); if (df) { const l = addrs(); l.forEach(a => a.defaut = a.id === df.dataset.default); store.set('adresses', l); route(); toast('Adresse par défaut mise à jour'); }
+      const da = e.target.closest('[data-deladdr]'); if (da) confirmBox('Supprimer cette adresse ?', '<p>Cette action est définitive.</p>', () => { store.set('adresses', addrs().filter(a => a.id !== da.dataset.deladdr)); route(); }, { yes: 'Supprimer', yesCls: 'btn-danger', tone: 'danger' });
+      const of = e.target.closest('[data-of]');
+      if (of) { document.querySelectorAll('[data-of]').forEach(c => c.classList.toggle('active', c === of)); const i = +of.dataset.of;
+        const l = Orders.mine().filter(o => i === 0 || (i === 1 && !['livree', 'annulee', 'retour'].includes(o.statutLivraison)) || (i === 2 && o.statutLivraison === 'livree') || (i === 3 && ['annulee', 'retour'].includes(o.statutLivraison)));
+        document.getElementById('olist').innerHTML = l.length ? l.map(orderCard).join('') : '<div class="card card-pad muted">Aucune commande.</div>'; }
+      const c = e.target.closest('[data-cancel]');
+      if (c) { const o = Orders.find(c.dataset.cancel);
+        modal({ title: 'Annuler la commande ' + o.numero + ' ?', tone: 'danger', body: `<p>La commande n’est pas encore expédiée : l’annulation est gratuite.${o.statutPaiement === 'paye' ? ' Le montant de <b>' + fmt(o.total) + '</b> sera remboursé sur votre compte ' + PAY(o.paiement).nom + ' sous 72 h.' : ''}</p><div class="field"><label>Motif <span class="req">*</span></label><select class="select" id="motif"><option value="">Choisir…</option><option>J’ai changé d’avis</option><option>Délai de livraison trop long</option><option>Erreur dans la commande</option><option>Autre</option></select><span class="err">Veuillez indiquer un motif.</span></div>`,
+          actions: [{ label: 'Garder ma commande' }, { label: 'Confirmer l’annulation', cls: 'btn-danger', onClick(bd) { const m = bd.querySelector('#motif'); if (!m.value) { m.closest('.field').classList.add('error'); return false; }
+            const l = store.get('orders', []); const x = l.find(y => y.numero === o.numero) || o; x.statutLivraison = 'annulee'; x.statutPaiement = x.statutPaiement === 'paye' ? 'rembourse' : 'annule'; x.historique.push({ date: 'maintenant', statut: 'Commande annulée (' + m.value + ')', par: 'Client' });
+            if (l.find(y => y.numero === o.numero)) store.set('orders', l); route(); toast('Commande annulée'); } }] }); }
+      const r = e.target.closest('[data-retour]');
+      if (r) modal({ title: 'Demande de retour', tone: 'info', icon: 'refresh', body: `<p>Vous disposez de 7 jours après la livraison. Le vendeur valide la demande sous 48 h.</p><div class="field"><label>Motif</label><select class="select"><option>Produit défectueux</option><option>Non conforme à la description</option><option>Taille / couleur incorrecte</option></select></div><div class="field" style="margin-top:10px"><label>Photos (facultatif)</label><input class="input" type="file" accept="image/*" multiple></div>`,
+        actions: [{ label: 'Annuler' }, { label: 'Envoyer la demande', cls: 'btn-primary', onClick: () => toast('Demande de retour envoyée au vendeur') }] });
+      if (e.target.closest('[data-export]')) toast('Export en préparation : vous recevrez un lien par e-mail.');
+      if (e.target.closest('[data-delacc]')) confirmBox('Supprimer votre compte ?', '<p>Vos données personnelles seront supprimées. Les factures sont conservées selon les obligations légales.</p>', () => toast('Demande de suppression enregistrée'), { yes: 'Supprimer', yesCls: 'btn-danger', tone: 'danger' });
+    });
+    document.addEventListener('submit', e => {
+      e.preventDefault(); const f = e.target; if (!validate(f)) return;
+      if (f.id === 'f-pwd') { const n2 = f.n2.closest('.field'); const bad = f.n1.value !== f.n2.value; n2.classList.toggle('error', bad); n2.querySelector('.err').textContent = 'Les mots de passe ne correspondent pas.'; if (bad) return; f.reset(); toast('Mot de passe modifié'); }
+      if (f.id === 'f-profil') { store.set('user', { ...user, ...Object.fromEntries(new FormData(f).entries()) }); toast('Profil enregistré'); }
+    });
+    addEventListener('hashchange', route);
+    route();
+  </script>
+</body>
+</html>

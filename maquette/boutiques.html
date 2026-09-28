@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Toutes les boutiques — Site E_commerce</title>
+  <meta name="description" content="Découvrez les vendeurs vérifiés de la marketplace Site E_commerce, partout à Madagascar.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="boutiques">
+  <div id="app-header"></div>
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>Boutiques</span></nav>
+    <div class="page-title"><div><h1>Nos boutiques</h1><p class="text-2" style="margin:0">Des vendeurs vérifiés dans toute l’île, sélectionnés pour la qualité de leurs produits et de leur service.</p></div>
+      <div class="search-box" style="max-width:320px"><input id="q" type="search" placeholder="Rechercher une boutique" aria-label="Rechercher une boutique"><button aria-label="Rechercher"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button></div></div>
+    <div class="row wrap" id="chips" style="gap:8px;margin-bottom:18px"></div>
+    <div class="vendor-grid" id="list"></div>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, esc, stars, pv, P } = App;
+    let cat = '', q = '';
+    document.getElementById('chips').innerHTML = `<button class="chip active" data-c="">Toutes</button>` + DB.categories.map(c => `<button class="chip" data-c="${c.id}">${c.nom}</button>`).join('');
+    function render() {
+      const l = DB.vendeurs.filter(v => v.statut === 'actif' && (!cat || v.cat === cat) && (!q || (v.nom + ' ' + v.ville).toLowerCase().includes(q.toLowerCase())));
+      document.getElementById('list').innerHTML = l.length ? l.map(v => {
+        const prods = DB.produits.filter(p => p.vendeur === v.id).slice(0, 3);
+        return `<a class="vcard" href="boutique.html?id=${v.id}" style="--h:${v.hue}"><div class="v-cover"></div><div class="v-body">
+          <div class="v-avatar">${App.initials(v.nom)}</div>
+          <div class="row between" style="margin-top:10px"><b>${esc(v.nom)}</b>${v.verifie ? `<span class="verified">${icon('shield')} Vérifié</span>` : ''}</div>
+          <div class="small muted">${icon('pin', 'sm')} ${v.ville}, ${v.region} · ${App.C(v.cat).nom}</div>
+          <p class="small text-2" style="margin:8px 0">${esc(v.desc)}</p>
+          <div class="row" style="gap:8px"><span class="stars">${stars(v.note)}</span><span class="xs muted">${v.note} · ${v.avis} avis · ${App.fmtN(v.ventes)} ventes</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px">${prods.map(p => pv(p, 'sm')).join('')}</div>
+        </div></a>`; }).join('') : `<div class="empty card" style="grid-column:1/-1">${icon('store')}<h3>Aucune boutique trouvée</h3></div>`;
+    }
+    document.addEventListener('click', e => { const c = e.target.closest('[data-c]'); if (!c) return; cat = c.dataset.c; document.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('active', x === c)); render(); });
+    document.getElementById('q').addEventListener('input', e => { q = e.target.value.trim(); render(); });
+    render();
+  </script>
+</body>
+</html>

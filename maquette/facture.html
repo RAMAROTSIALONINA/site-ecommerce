@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facture — Site E_commerce</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    body { padding-bottom: 0; }
+    .invoice { max-width: 860px; margin: 24px auto; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); }
+    @media (min-width: 768px) { .invoice { padding: 44px; } }
+    .inv-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 2px solid var(--text); }
+    .inv-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin: 22px 0; }
+    @media (min-width: 640px) { .inv-grid { grid-template-columns: 1fr 1fr; } }
+    .inv-grid h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 6px; font-family: var(--font); }
+    .inv-table th { background: #F1F5F9; }
+    .inv-tot { margin-left: auto; max-width: 340px; margin-top: 14px; }
+    .stamp { display: inline-block; padding: 6px 14px; border: 2px solid currentColor; border-radius: 8px; font-weight: 800; letter-spacing: .08em; transform: rotate(-4deg); }
+    @media print { .invoice { border: 0; box-shadow: none; margin: 0; padding: 0; max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="container no-print" style="max-width:860px;display:flex;justify-content:space-between;gap:10px;padding-top:18px;flex-wrap:wrap">
+    <a class="btn btn-ghost" href="compte.html#commandes" id="back">← Retour</a>
+    <div class="row"><button class="btn" onclick="window.print()"><svg class="ico sm" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Imprimer</button><button class="btn btn-primary" onclick="window.print()"><svg class="ico sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg> Télécharger en PDF</button></div>
+  </div>
+  <div class="invoice" id="inv"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script>
+    const { fmt, fmtDate, esc, P, V, Z, PAY, CL, Orders, statusPill } = App;
+    const o = Orders.find(App.qs('id')) || DB.commandes[0];
+    if (document.referrer.includes('/admin/')) document.getElementById('back').href = 'admin/index.html#commande/' + o.numero;
+    const c = CL(o.client) || App.User.get();
+    const a = o.adresse || { nom: c.prenom + ' ' + c.nom, tel: c.tel, adresse: 'Adresse de livraison', fokontany: '—', commune: '—', ville: c.ville, region: '' };
+    const date = o.date === 'maintenant' ? new Date().toISOString().slice(0, 10) : o.date.split(' ')[0];
+    const numFac = 'FAC-' + o.numero.replace('CMD-', '');
+    const sp = DB.statutsPaiement[o.statutPaiement];
+    document.title = numFac + ' — Site E_commerce';
+
+    document.getElementById('inv').innerHTML = `
+      <div class="inv-head">
+        <div><div class="logo"><span class="logo-mark"><svg class="ico" viewBox="0 0 24 24">${App.ICONS.bag}</svg></span>Site E_commerce</div>
+          <p class="small text-2" style="margin:10px 0 0">Plateforme marketplace — Analakely, Antananarivo 101<br>NIF 4000000000 · STAT 47910 11 2026 0 00001<br>contact@site-ecommerce.mg · +261 34 00 000 00</p></div>
+        <div class="right"><h1 style="font-size:1.6rem;margin:0">${o.statutPaiement === 'paye' ? 'FACTURE' : 'REÇU DE COMMANDE'}</h1>
+          <p class="small text-2" style="margin:6px 0 0">N° <b>${numFac}</b><br>Date : ${fmtDate(date)}<br>Commande : ${o.numero}</p>
+          <div style="margin-top:10px;color:var(--${sp.c || 'text-2'})"><span class="stamp">${sp.l.toUpperCase()}</span></div></div>
+      </div>
+      <div class="inv-grid">
+        <div><h4>Facturé à</h4><b>${esc(c.prenom)} ${esc(c.nom)}</b><p class="small text-2" style="margin:4px 0 0">${esc(c.email)}<br>${esc(c.tel)}</p></div>
+        <div><h4>Livré à</h4><b>${esc(a.nom)}</b><p class="small text-2" style="margin:4px 0 0">${esc(a.adresse)}, fokontany ${esc(a.fokontany)}<br>${esc(a.commune)} — ${esc(a.ville)}<br>${Z(o.zone).nom}</p></div>
+      </div>
+      <div class="table-wrap"><table class="table inv-table"><thead><tr><th>Désignation</th><th>Vendeur</th><th class="right">Qté</th><th class="right">P.U.</th><th class="right">Remise</th><th class="right">Total</th></tr></thead><tbody>
+        ${o.lignes.map(l => { const p = P(l.produit); const rem = p.promo != null && l.prix === p.promo ? (p.prix - p.promo) * l.qte : 0; return `<tr><td><b class="small">${esc(p.nom)}</b><div class="xs muted">Réf. ${p.sku}${l.variante ? ' · ' + esc(l.variante) : ''}</div></td><td class="small">${esc(V(l.vendeur).nom)}<div class="xs muted">NIF ${V(l.vendeur).nif}</div></td><td class="right">${l.qte}</td><td class="right nowrap">${fmt(rem ? p.prix : l.prix)}</td><td class="right nowrap">${rem ? '− ' + fmt(rem) : '—'}</td><td class="right nowrap bold">${fmt(l.prix * l.qte)}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <div class="inv-tot">
+        <div class="sum-row"><span>Sous-total</span><b>${fmt(o.sousTotal)}</b></div>
+        ${o.remise ? `<div class="sum-row"><span>Code promo ${o.codePromo}</span><span class="discount">− ${fmt(o.remise)}</span></div>` : ''}
+        <div class="sum-row"><span>Livraison (${Z(o.zone).nom})</span><b>${o.frais ? fmt(o.frais) : 'Gratuit'}</b></div>
+        <div class="sum-row total"><span>Total à payer</span><span>${fmt(o.total)}</span></div>
+        <div class="sum-row small"><span>Mode de paiement</span><span>${PAY(o.paiement).nom}</span></div>
+        <div class="sum-row small"><span>Statut du paiement</span>${statusPill('statutsPaiement', o.statutPaiement)}</div>
+        ${o.refPaiement ? `<div class="sum-row small"><span>Référence transaction</span><span>${o.refPaiement}</span></div>` : ''}
+      </div>
+      <p class="xs muted" style="margin-top:28px;border-top:1px solid var(--line);padding-top:14px">Montants exprimés en Ariary (MGA). Chaque vendeur est responsable de la TVA applicable à ses ventes selon son régime fiscal. Document généré électroniquement par Site E_commerce pour le compte des vendeurs mentionnés. Conditions de retour : 7 jours après livraison — voir les CGV.</p>`;
+  </script>
+</body>
+</html>

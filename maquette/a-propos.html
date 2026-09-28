@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>À propos — Site E_commerce</title>
+  <meta name="description" content="Site E_commerce, la marketplace qui connecte les vendeurs et les clients de toute l’île.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="apropos">
+  <div id="app-header"></div>
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span>À propos</span></nav>
+    <section class="hero-main" style="margin:10px 0 24px;min-height:260px">
+      <span class="eyebrow">Notre mission</span>
+      <h1>Rendre le commerce en ligne simple et fiable pour tout Madagascar.</h1>
+      <p>Nous connectons les commerçants, artisans et producteurs de l’île à des milliers de clients, avec des paiements locaux et une livraison organisée par zones.</p>
+    </section>
+    <div class="kpi-mini" id="kpi"></div>
+    <div class="form-grid two" style="margin-top:24px" id="values"></div>
+    <div class="card card-pad center" style="margin-top:24px">
+      <h2>Une question ?</h2><p class="text-2">Notre équipe est basée à Antananarivo et vous répond du lundi au samedi.</p>
+      <div class="row wrap" style="justify-content:center"><a class="btn btn-primary" href="contact.html">Nous contacter</a><a class="btn" href="vendre.html">Devenir vendeur</a></div>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon } = App;
+    document.getElementById('kpi').innerHTML = [['120+', 'Vendeurs vérifiés'], ['8 500', 'Produits en ligne'], ['22', 'Régions livrées'], ['4,7 / 5', 'Satisfaction client']].map(k => `<div class="card"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+    document.getElementById('values').innerHTML = [
+      ['phone', 'Pensé pour le mobile', 'Un site rapide et léger, utilisable entièrement au doigt, même avec une connexion 3G.'],
+      ['shield', 'Confiance', 'Chaque vendeur est vérifié (NIF, STAT, CIN). Les paiements sont sécurisés et reversés après livraison.'],
+      ['truck', 'Livraison organisée', 'Des zones et tarifs clairs, un suivi à chaque étape et un livreur qui vous appelle.'],
+      ['leaf', 'Économie locale', 'Nous mettons en avant les producteurs et artisans malgaches : vanille, raphia, soie, huiles essentielles…']
+    ].map(v => `<div class="card card-pad row" style="align-items:flex-start;gap:14px"><span class="ti-ico" style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--primary-50);color:var(--primary);flex:none">${icon(v[0])}</span><div><h3>${v[1]}</h3><p class="text-2" style="margin:0">${v[2]}</p></div></div>`).join('');
+  </script>
+</body>
+</html>

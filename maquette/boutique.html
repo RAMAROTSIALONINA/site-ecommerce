@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Boutique — Site E_commerce</title>
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="boutiques">
+  <div id="app-header"></div>
+  <main class="container">
+    <nav class="breadcrumb" id="crumb" aria-label="Fil d’Ariane"></nav>
+    <div id="hero"></div>
+    <div class="tabs" id="tabs"><button class="on" data-t="produits">Produits</button><button data-t="avis">Avis</button><button data-t="infos">À propos</button></div>
+    <div class="tab-panel" id="panel"></div>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, esc, stars, productCard, V, P, toast, modal, fmtDate } = App;
+    const v = V(App.qs('id')) || DB.vendeurs[2];
+    const prods = DB.produits.filter(p => p.vendeur === v.id);
+    let follow = App.store.get('follow_' + v.id, false), sort = 'ventes';
+    document.title = v.nom + ' — Boutique | Site E_commerce';
+    document.getElementById('crumb').innerHTML = `<a href="index.html">Accueil</a>${icon('chevron-right')}<a href="boutiques.html">Boutiques</a>${icon('chevron-right')}<span>${esc(v.nom)}</span>`;
+    function hero() {
+      document.getElementById('hero').innerHTML = `<div class="shop-hero" style="--h:${v.hue}"><div class="shop-cover"></div>
+        <div class="shop-id"><div class="v-avatar">${App.initials(v.nom)}</div>
+          <div class="grow" style="min-width:220px"><div class="row wrap" style="gap:8px"><h1 style="margin:0;font-size:1.5rem">${esc(v.nom)}</h1>${v.verifie ? `<span class="verified">${icon('shield')} Vendeur vérifié</span>` : ''}</div>
+            <div class="shop-stats" style="margin-top:6px"><span>${icon('pin', 'sm')} ${v.ville}</span><span><span class="stars">${stars(v.note)}</span> <b>${v.note}</b> (${v.avis} avis)</span><span><b>${App.fmtN(v.ventes)}</b> ventes</span><span><b>${prods.length}</b> produits</span><span>Membre depuis <b>${v.depuis}</b></span></div></div>
+          <div class="row"><button class="btn ${follow ? 'btn-soft' : 'btn-primary'}" data-follow>${icon(follow ? 'check' : 'plus', 'sm')} ${follow ? 'Abonné' : 'Suivre'}</button><button class="btn" data-contact>${icon('message', 'sm')} Contacter</button></div>
+        </div></div>`;
+    }
+    const T = {
+      produits: () => `<div class="toolbar"><span class="small muted">${prods.length} produit(s)</span><select class="select" id="sort"><option value="ventes">Meilleures ventes</option><option value="prix-asc">Prix croissant</option><option value="prix-desc">Prix décroissant</option></select></div>
+        <div class="grid-products">${[...prods].sort({ ventes: (a, b) => b.ventes - a.ventes, 'prix-asc': (a, b) => App.unitPrice(a) - App.unitPrice(b), 'prix-desc': (a, b) => App.unitPrice(b) - App.unitPrice(a) }[sort]).map(p => productCard(p)).join('')}</div>`,
+      avis: () => { const r = DB.avis.filter(a => a.statut === 'publie' && P(a.produit).vendeur === v.id); return r.length ? r.map(a => `<div class="review"><div class="row between"><b class="small">${esc(a.client)}</b><span class="xs muted">${fmtDate(a.date)}</span></div><div class="stars" style="margin:6px 0">${stars(a.note)}</div><p class="small text-2" style="margin:0">${esc(a.texte)}</p><a class="xs" href="produit.html?id=${a.produit}" style="color:var(--primary)">${esc(P(a.produit).nom)}</a></div>`).join('') : '<p class="muted">Pas encore d’avis publié.</p>'; },
+      infos: () => `<div class="form-grid two"><div class="card card-pad"><h3>À propos</h3><p class="text-2">${esc(v.desc)}</p></div>
+        <div class="card card-pad"><h3>Informations légales</h3><table class="spec-table"><tbody><tr><td>Raison sociale</td><td>${esc(v.nom)}</td></tr><tr><td>Siège</td><td>${v.ville}, ${v.region}</td></tr><tr><td>NIF</td><td>${v.nif}</td></tr><tr><td>STAT</td><td>${v.stat}</td></tr><tr><td>Délai d’expédition</td><td>24 à 48 h</td></tr></tbody></table></div></div>`
+    };
+    function tab(t) { document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); document.getElementById('panel').innerHTML = T[t](); const s = document.getElementById('sort'); if (s) s.value = sort; }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('[data-t]'); if (t) tab(t.dataset.t);
+      if (e.target.closest('[data-follow]')) { follow = !follow; App.store.set('follow_' + v.id, follow); hero(); toast(follow ? 'Vous suivez ' + v.nom : 'Abonnement retiré'); }
+      if (e.target.closest('[data-contact]')) modal({ title: 'Contacter ' + esc(v.nom), tone: 'info', icon: 'message', body: `<p class="small">Votre message est transmis via la messagerie de la plateforme. Ne partagez jamais vos codes Mobile Money.</p><div class="field"><label>Sujet</label><select class="select"><option>Question sur un produit</option><option>Suivi d’une commande</option><option>Autre</option></select></div><div class="field" style="margin-top:10px"><label>Message <span class="req">*</span></label><textarea class="textarea" id="msg"></textarea><span class="err">Écrivez votre message.</span></div>`,
+        actions: [{ label: 'Annuler' }, { label: 'Envoyer', cls: 'btn-primary', onClick(bd) { const m = bd.querySelector('#msg'); if (!m.value.trim()) { m.closest('.field').classList.add('error'); return false; } toast('Message envoyé au vendeur'); } }] });
+    });
+    document.addEventListener('change', e => { if (e.target.id === 'sort') { sort = e.target.value; tab('produits'); } });
+    hero(); tab('produits');
+  </script>
+</body>
+</html>

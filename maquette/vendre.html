@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Vendre sur Site E_commerce — Ouvrez votre boutique</title>
+  <meta name="description" content="Ouvrez gratuitement votre boutique en ligne et vendez dans tout Madagascar. Commission par vente, reversements Mobile Money ou virement.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="vendre">
+  <div id="app-header"></div>
+  <main>
+    <section class="section"><div class="container">
+      <div class="seller-cta">
+        <div><span class="badge" style="background:rgba(94,234,212,.15);color:#5EEAD4">Devenir vendeur</span>
+          <h1 style="color:#fff;margin-top:12px">Vendez partout à Madagascar, sans ouvrir de nouveau magasin.</h1>
+          <p style="color:#94A3B8">Nous nous occupons du site, du paiement et de la livraison. Vous vous concentrez sur vos produits.</p>
+          <a class="btn btn-lg btn-primary" href="#inscription">Ouvrir ma boutique gratuitement</a></div>
+        <div class="kpis"><div><b>1,2 M</b><span>Visites / mois</span></div><div><b>22</b><span>Régions livrées</span></div><div><b>15 j</b><span>Reversements</span></div></div>
+      </div>
+    </div></section>
+
+    <section class="section" style="padding-top:0"><div class="container">
+      <h2 class="center">Comment ça marche ?</h2>
+      <div class="trust-bar" id="how" style="margin-top:20px"></div>
+    </div></section>
+
+    <section class="section" style="padding-top:0"><div class="container" style="max-width:900px">
+      <h2 class="center">Tarifs transparents</h2>
+      <div class="card table-wrap" style="margin-top:16px"><table class="table"><thead><tr><th>Catégorie</th><th class="right">Commission par vente</th></tr></thead><tbody id="fees"></tbody></table></div>
+      <p class="xs muted center" style="margin-top:8px">Aucun abonnement, aucun frais d’ouverture. La commission est calculée sur le prix de vente hors frais de livraison.</p>
+    </div></section>
+
+    <section class="section" id="inscription" style="padding-top:0"><div class="container" style="max-width:900px">
+      <div class="card card-pad">
+        <h2>Demande d’ouverture de boutique</h2>
+        <div class="steps" id="steps"><div class="st on">1. Boutique</div><div class="st">2. Informations légales</div><div class="st">3. Reversements</div></div>
+        <form id="f" novalidate></form>
+      </div>
+    </div></section>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, validate, modal, esc } = App;
+    document.getElementById('how').innerHTML = [
+      ['edit', '1. Inscription', 'Remplissez le formulaire en 5 minutes'], ['shield', '2. Vérification', 'Contrôle NIF / STAT / CIN sous 48 h'],
+      ['package', '3. Mise en ligne', 'Ajoutez vos produits depuis votre téléphone'], ['wallet', '4. Reversements', 'Tous les 15 jours, MVola ou virement']
+    ].map(t => `<div class="trust-item glass"><span class="ti-ico">${icon(t[0])}</span><div><b>${t[1]}</b><span>${t[2]}</span></div></div>`).join('');
+    document.getElementById('fees').innerHTML = DB.categories.map(c => `<tr><td>${c.nom}</td><td class="right bold">${{ tech: 8, mode: 12, beaute: 12 }[c.id] || 10} %</td></tr>`).join('');
+
+    let step = 1; const data = {};
+    const F = (l, n, r, ex, cls) => `<div class="field ${cls || ''}"><label>${l}${r && r.includes('req') ? ' <span class="req">*</span>' : ''}</label><input class="input" name="${n}" ${r ? `data-rule="${r}"` : ''} value="${esc(data[n] || '')}" ${ex || ''}><span class="err"></span></div>`;
+    function render() {
+      document.querySelectorAll('#steps .st').forEach((s, i) => s.className = 'st ' + (i + 1 < step ? 'done' : i + 1 === step ? 'on' : ''));
+      const f = document.getElementById('f');
+      if (step === 1) f.innerHTML = `<div class="form-grid two">${F('Nom de la boutique', 'boutique', 'req')}
+        <div class="field"><label>Catégorie principale <span class="req">*</span></label><select class="select" name="cat" data-rule="req"><option value="">Choisir…</option>${DB.categories.map(c => `<option value="${c.id}" ${data.cat === c.id ? 'selected' : ''}>${c.nom}</option>`).join('')}</select><span class="err"></span></div>
+        ${F('Nom du responsable', 'responsable', 'req')}${F('Téléphone', 'tel', 'req tel', 'type="tel" inputmode="tel" placeholder="034 12 345 67"')}
+        ${F('E-mail professionnel', 'email', 'req email', 'type="email"')}
+        <div class="field"><label>Région <span class="req">*</span></label><select class="select" name="region" data-rule="req"><option value="">Choisir…</option>${DB.regions.map(r => `<option ${data.region === r ? 'selected' : ''}>${r}</option>`).join('')}</select><span class="err"></span></div>
+        <div class="field span-2"><label>Présentation de la boutique</label><textarea class="textarea" name="desc" placeholder="Vos produits, votre savoir-faire…">${esc(data.desc || '')}</textarea></div></div>
+        <div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn btn-primary btn-lg">Continuer</button></div>`;
+      if (step === 2) f.innerHTML = `<div class="alert alert-info" style="margin-bottom:14px">${icon('shield')}<span>Ces informations sont vérifiées par notre équipe avant l’activation de la boutique. Elles figurent sur les factures clients.</span></div>
+        <div class="form-grid two">
+        <div class="field"><label>Statut juridique <span class="req">*</span></label><select class="select" name="statut" data-rule="req"><option value="">Choisir…</option>${['Entreprise individuelle', 'SARL / SARLU', 'SA', 'Coopérative / association', 'Artisan (carte professionnelle)'].map(s => `<option ${data.statut === s ? 'selected' : ''}>${s}</option>`).join('')}</select><span class="err"></span></div>
+        ${F('Raison sociale', 'raison', 'req')}
+        ${F('NIF', 'nif', 'req', 'inputmode="numeric" maxlength="10" placeholder="10 chiffres"')}${F('Numéro STAT', 'stat', 'req', 'placeholder="Ex. 47111 11 2024 0 00123"')}
+        <div class="field"><label>CIN du responsable (recto/verso) <span class="req">*</span></label><input class="input" type="file" name="cin" accept="image/*,.pdf" data-rule="req"><span class="err"></span></div>
+        <div class="field"><label>Carte fiscale / extrait RCS <span class="req">*</span></label><input class="input" type="file" name="rcs" accept="image/*,.pdf" data-rule="req"><span class="err"></span></div>
+        </div>
+        <div class="row between" style="margin-top:18px"><button type="button" class="btn btn-ghost" data-back>Retour</button><button class="btn btn-primary btn-lg">Continuer</button></div>`;
+      if (step === 3) f.innerHTML = `<p class="text-2">Choisissez comment recevoir vos reversements (ventes livrées, moins la commission).</p>
+        <div class="options-grid two" style="margin-bottom:14px">${[['mm', 'Mobile Money', 'MVola, Orange Money ou Airtel Money'], ['banque', 'Virement bancaire', 'Compte professionnel à Madagascar']].map(o => `<label class="option-card ${data.rv === o[0] ? 'selected' : ''}"><input type="radio" name="rv" value="${o[0]}" ${data.rv === o[0] ? 'checked' : ''}><div><b>${o[1]}</b><div class="small muted">${o[2]}</div></div></label>`).join('')}</div>
+        <div class="field hidden" id="rv-err"><span class="err" style="display:block">Choisissez un mode de reversement.</span></div>
+        <div id="rv-fields" class="form-grid two">${data.rv === 'banque' ? F('Banque', 'banque', 'req', 'placeholder="Ex. BOA, BNI, BFV-SG, BMOI…"') + F('RIB / IBAN', 'iban', 'req') : data.rv === 'mm' ? F('Numéro Mobile Money', 'mmtel', 'req tel', 'type="tel"') + F('Nom du titulaire', 'titulaire', 'req') : ''}</div>
+        <label class="check" style="margin-top:14px"><input type="checkbox" id="charte"> J’accepte la charte vendeur, les conditions de commission et je certifie l’exactitude des informations.</label>
+        <div class="field hidden" id="charte-err"><span class="err" style="display:block">Vous devez accepter la charte vendeur.</span></div>
+        <div class="row between" style="margin-top:18px"><button type="button" class="btn btn-ghost" data-back>Retour</button><button class="btn btn-primary btn-lg">Envoyer ma demande</button></div>`;
+    }
+    const collect = () => { new FormData(document.getElementById('f')).forEach((v, k) => { if (!(v instanceof File)) data[k] = v; }); };
+    document.getElementById('f').addEventListener('submit', e => {
+      e.preventDefault(); const f = e.target; collect();
+      if (step === 2 && data.nif && !/^\d{10}$/.test(data.nif)) { validate(f); const fn = f.nif.closest('.field'); fn.classList.add('error'); fn.querySelector('.err').textContent = 'Le NIF doit comporter 10 chiffres.'; return; }
+      if (!validate(f)) return;
+      if (step === 3) {
+        document.getElementById('rv-err').classList.toggle('hidden', !!data.rv); if (!data.rv) return;
+        const ok = document.getElementById('charte').checked; document.getElementById('charte-err').classList.toggle('hidden', ok); if (!ok) return;
+        modal({ title: 'Demande envoyée !', tone: 'success', body: `<p>Merci <b>${esc(data.responsable)}</b>. Votre dossier « ${esc(data.boutique)} » est en cours de vérification. Réponse sous 48 h ouvrées par e-mail et SMS.</p><p class="small muted">Référence du dossier : VND-2026-0${Math.floor(Math.random() * 900 + 100)}</p>`,
+          actions: [{ label: 'Découvrir l’espace vendeur', cls: 'btn-primary', onClick: () => { location.href = 'vendeur/index.html'; } }] });
+        return;
+      }
+      step++; render(); document.getElementById('inscription').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.addEventListener('click', e => { if (e.target.closest('[data-back]')) { collect(); step--; render(); } });
+    document.addEventListener('change', e => { if (e.target.name === 'rv') { collect(); render(); } });
+    render();
+  </script>
+</body>
+</html>

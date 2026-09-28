@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Catalogue — Site E_commerce</title>
+  <meta name="description" content="Tous les produits de la marketplace : filtrez par catégorie, prix, boutique et disponibilité.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="catalogue">
+  <div id="app-header"></div>
+
+  <main class="container">
+    <nav class="breadcrumb" id="crumb" aria-label="Fil d’Ariane"></nav>
+    <div class="page-title"><h1 id="title">Catalogue</h1><span class="muted small" id="count"></span></div>
+    <div class="row wrap" id="subcats" style="gap:8px;margin-bottom:16px"></div>
+
+    <div class="catalog">
+      <aside class="filters card card-pad" id="filters" aria-label="Filtres"></aside>
+      <section>
+        <div class="toolbar">
+          <button class="btn btn-sm" id="btn-filters" style="display:none">…</button>
+          <div class="active-filters" id="active" style="margin:0"></div>
+          <label class="row small text-2" style="gap:8px;margin-left:auto">Trier par
+            <select class="select" id="sort">
+              <option value="pertinence">Pertinence</option>
+              <option value="ventes">Meilleures ventes</option>
+              <option value="prix-asc">Prix croissant</option>
+              <option value="prix-desc">Prix décroissant</option>
+              <option value="note">Mieux notés</option>
+              <option value="remise">Plus forte remise</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid-products" id="grid"></div>
+        <nav class="pagination" aria-label="Pagination"><span class="on">1</span><a href="#">2</a><a href="#">3</a><span>…</span><a href="#">12</a><a href="#" aria-label="Page suivante"><svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></nav>
+      </section>
+    </div>
+  </main>
+
+  <aside class="drawer right" id="drawer-filters" aria-label="Filtres">
+    <div class="drawer-head"><b>Filtres</b><button class="btn btn-ghost btn-icon" data-drawer-close aria-label="Fermer"><svg class="ico" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="drawer-body" id="filters-m" style="padding:16px"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:10px">
+      <button class="btn grow" data-reset>Réinitialiser</button><button class="btn btn-primary grow" data-drawer-close id="show-results">Voir les résultats</button>
+    </div>
+  </aside>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, productCard, C, V, fmt, esc, unitPrice, dispo } = App;
+    const params = new URLSearchParams(location.search);
+    const state = {
+      cat: params.get('cat') || '', q: (params.get('q') || '').trim(), promo: params.get('promo') === '1',
+      tri: params.get('tri') || 'pertinence', sous: [], vendeurs: [], min: '', max: '', note: 0, stock: false
+    };
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    function base() {
+      return DB.produits.filter(p => p.actif && (!state.cat || p.cat === state.cat) && (!state.promo || p.promo != null) &&
+        (!state.q || norm(p.nom + ' ' + V(p.vendeur).nom + ' ' + C(p.cat).nom + ' ' + p.sous).includes(norm(state.q))));
+    }
+    function filtered() {
+      const l = base().filter(p =>
+        (!state.sous.length || state.sous.includes(p.sous)) && (!state.vendeurs.length || state.vendeurs.includes(p.vendeur)) &&
+        (state.min === '' || unitPrice(p) >= +state.min) && (state.max === '' || unitPrice(p) <= +state.max) &&
+        p.note >= state.note && (!state.stock || dispo(p) > 0));
+      const s = { ventes: (a, b) => b.ventes - a.ventes, 'prix-asc': (a, b) => unitPrice(a) - unitPrice(b), 'prix-desc': (a, b) => unitPrice(b) - unitPrice(a), note: (a, b) => b.note - a.note, remise: (a, b) => App.pct(b) - App.pct(a) }[state.tri];
+      return s ? [...l].sort(s) : l;
+    }
+
+    function filtersHtml(sfx) {
+      const b = base();
+      const sous = [...new Set(b.map(p => p.sous))];
+      const vend = [...new Set(b.map(p => p.vendeur))];
+      const cnt = (k, v) => b.filter(p => p[k] === v).length;
+      const on = 'color:var(--primary-700);font-weight:600';
+      return `
+        <div class="filter-block"><h4>Catégories</h4>
+          <a class="check" href="catalogue.html${state.promo ? '?promo=1' : ''}" style="${!state.cat ? on : ''}">Toutes les catégories</a>
+          ${DB.categories.map(c => `<a class="check" href="catalogue.html?cat=${c.id}${state.promo ? '&promo=1' : ''}" style="${state.cat === c.id ? on : ''}">${c.nom}</a>`).join('')}
+        </div>
+        ${sous.length > 1 ? `<div class="filter-block"><h4>Sous-catégorie</h4>${sous.map(s => `<label class="check"><input type="checkbox" data-f="sous" value="${esc(s)}" ${state.sous.includes(s) ? 'checked' : ''}> ${esc(s)} <span class="muted">${cnt('sous', s)}</span></label>`).join('')}</div>` : ''}
+        <div class="filter-block"><h4>Prix (Ar)</h4><div class="range-row">
+          <input class="input" type="number" inputmode="numeric" min="0" step="1000" placeholder="Min" data-f="min" value="${state.min}" aria-label="Prix minimum">
+          <span class="muted">—</span>
+          <input class="input" type="number" inputmode="numeric" min="0" step="1000" placeholder="Max" data-f="max" value="${state.max}" aria-label="Prix maximum"></div>
+          <div class="field error hidden" data-price-err style="margin-top:6px"><span class="err">Le prix minimum doit être inférieur ou égal au maximum.</span></div>
+        </div>
+        <div class="filter-block"><h4>Boutique</h4>${vend.map(v => `<label class="check"><input type="checkbox" data-f="vendeurs" value="${v}" ${state.vendeurs.includes(v) ? 'checked' : ''}> ${esc(V(v).nom)} <span class="muted">${cnt('vendeur', v)}</span></label>`).join('')}</div>
+        <div class="filter-block"><h4>Note client</h4>${[4, 3].map(n => `<label class="check"><input type="radio" name="note${sfx}" data-f="note" value="${n}" ${state.note === n ? 'checked' : ''}> <span class="stars">${App.stars(n)}</span> et plus</label>`).join('')}</div>
+        <div class="filter-block"><h4>Disponibilité</h4><label class="check"><input type="checkbox" data-f="stock" ${state.stock ? 'checked' : ''}> En stock uniquement</label>
+          <label class="check"><input type="checkbox" data-f="promo" ${state.promo ? 'checked' : ''}> En promotion</label></div>
+        <button class="btn btn-sm btn-block" data-reset style="margin-top:14px">Réinitialiser les filtres</button>`;
+    }
+
+    function render() {
+      document.body.dataset.page = state.promo ? 'promo' : 'catalogue';
+      const c = C(state.cat);
+      const title = state.q ? `Résultats pour « ${esc(state.q)} »` : state.promo ? 'Promotions' + (c ? ' — ' + c.nom : '') : c ? c.nom : 'Toutes les catégories';
+      document.getElementById('title').innerHTML = title;
+      document.title = title.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, '') + ' — Site E_commerce';
+      document.getElementById('crumb').innerHTML = `<a href="index.html">Accueil</a>${icon('chevron-right')}<a href="catalogue.html">Catalogue</a>${c ? icon('chevron-right') + `<span>${c.nom}</span>` : ''}${state.q ? icon('chevron-right') + '<span>Recherche</span>' : ''}`;
+      document.getElementById('subcats').innerHTML = c ? c.sous.map(s => `<button class="chip ${state.sous.includes(s) ? 'active' : ''}" data-chip="${esc(s)}">${esc(s)}</button>`).join('') : '';
+
+      document.getElementById('filters').innerHTML = filtersHtml('d');
+      document.getElementById('filters-m').innerHTML = filtersHtml('m');
+
+      const priceBad = state.min !== '' && state.max !== '' && +state.min > +state.max;
+      document.querySelectorAll('[data-price-err]').forEach(e => e.classList.toggle('hidden', !priceBad));
+      const list = priceBad ? [] : filtered();
+      document.getElementById('count').textContent = list.length + ' produit' + (list.length > 1 ? 's' : '');
+      document.getElementById('show-results').textContent = 'Voir les ' + list.length + ' résultats';
+
+      const act = [];
+      state.sous.forEach(s => act.push(['sous', s, s]));
+      state.vendeurs.forEach(v => act.push(['vendeurs', v, V(v).nom]));
+      if (state.min !== '') act.push(['min', '', 'Min ' + fmt(state.min)]);
+      if (state.max !== '') act.push(['max', '', 'Max ' + fmt(state.max)]);
+      if (state.note) act.push(['note', '', state.note + ' étoiles et plus']);
+      if (state.stock) act.push(['stock', '', 'En stock']);
+      document.getElementById('active').innerHTML = act.map(a => `<button class="chip" data-rm="${a[0]}" data-v="${esc(a[1])}">${esc(a[2])} ${icon('x', 'sm')}</button>`).join('');
+      const bf = document.getElementById('btn-filters');
+      bf.innerHTML = icon('filter', 'sm') + ' Filtres' + (act.length ? ` <span class="badge badge-primary">${act.length}</span>` : '');
+      bf.style.display = innerWidth < 1000 ? '' : 'none';
+
+      document.getElementById('grid').innerHTML = list.length ? list.map(p => productCard(p)).join('') :
+        `<div class="empty card" style="grid-column:1/-1">${icon('search')}<h3>Aucun produit ne correspond</h3><p class="muted">Essayez d’élargir vos filtres ou de modifier votre recherche.</p><button class="btn btn-primary" data-reset>Réinitialiser les filtres</button></div>`;
+    }
+
+    document.addEventListener('change', e => {
+      const f = e.target.dataset.f; if (!f) return;
+      if (f === 'sous' || f === 'vendeurs') { const v = e.target.value; state[f] = e.target.checked ? [...state[f], v] : state[f].filter(x => x !== v); }
+      else if (f === 'min' || f === 'max') state[f] = e.target.value === '' ? '' : Math.max(0, +e.target.value);
+      else if (f === 'note') state.note = +e.target.value;
+      else if (f === 'stock') state.stock = e.target.checked;
+      else if (f === 'promo') state.promo = e.target.checked;
+      render();
+    });
+    document.addEventListener('click', e => {
+      if (e.target.closest('[data-reset]')) { Object.assign(state, { sous: [], vendeurs: [], min: '', max: '', note: 0, stock: false }); render(); }
+      const rm = e.target.closest('[data-rm]');
+      if (rm) { const k = rm.dataset.rm; if (Array.isArray(state[k])) state[k] = state[k].filter(x => x !== rm.dataset.v); else state[k] = k === 'note' ? 0 : k === 'stock' ? false : ''; render(); }
+      const ch = e.target.closest('[data-chip]');
+      if (ch) { const s = ch.dataset.chip; state.sous = state.sous.includes(s) ? state.sous.filter(x => x !== s) : [...state.sous, s]; render(); }
+      if (e.target.closest('#btn-filters')) { document.getElementById('drawer-filters').classList.add('open'); document.body.classList.add('drawer-open'); }
+    });
+    document.getElementById('sort').value = state.tri;
+    document.getElementById('sort').addEventListener('change', e => { state.tri = e.target.value; render(); });
+    addEventListener('resize', () => { document.getElementById('btn-filters').style.display = innerWidth < 1000 ? '' : 'none'; });
+    render();
+  </script>
+</body>
+</html>

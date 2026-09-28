@@ -197,7 +197,7 @@
   // ---------- Validation de formulaires ----------
   const RX = {
     email: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
-    telMg: /^(\+261|0)\s?3[2-48]\s?\d{2}\s?\d{3}\s?\d{2}$/ // 032, 033, 034, 037, 038
+    telMg: /^(\+261|0)\s?3[2-478]\s?\d{2}\s?\d{3}\s?\d{2}$/ // 032, 033, 034, 037, 038
   };
   function validate(form) {
     let ok = true;

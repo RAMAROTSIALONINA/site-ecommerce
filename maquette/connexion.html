@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Connexion / Inscription — Site E_commerce</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="compte">
+  <div id="app-header"></div>
+
+  <main class="container">
+    <div class="auth-wrap">
+      <div class="auth-side">
+        <div>
+          <h2 style="color:#fff">Votre compte Site E_commerce</h2>
+          <p style="color:rgba(255,255,255,.8)">Un seul compte pour acheter auprès de tous nos vendeurs.</p>
+          <ul style="list-style:none;padding:0;margin:24px 0 0" id="perks"></ul>
+        </div>
+        <p class="small" style="color:rgba(255,255,255,.7);margin:0">Besoin d’aide ? +261 34 00 000 00 · WhatsApp</p>
+      </div>
+
+      <div class="card card-pad" id="box"></div>
+    </div>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, validate, toast, modal, esc } = App;
+    const next = App.qs('next') || 'compte.html';
+    let mode = location.hash === '#inscription' ? 'register' : location.hash === '#oubli' ? 'forgot' : 'login';
+    let tries = 0;
+
+    document.getElementById('perks').innerHTML = [
+      ['package', 'Suivez vos commandes en temps réel'], ['pin', 'Enregistrez vos adresses de livraison'],
+      ['heart', 'Retrouvez vos favoris sur tous vos appareils'], ['file', 'Téléchargez vos factures PDF']
+    ].map(p => `<li>${icon(p[0])}<span>${p[1]}</span></li>`).join('');
+
+    const field = (lbl, name, type, rule, extra) => `<div class="field"><label for="${name}">${lbl}${rule.includes('req') ? ' <span class="req">*</span>' : ''}</label><input class="input" id="${name}" name="${name}" type="${type}" data-rule="${rule}" ${extra || ''}><span class="err"></span></div>`;
+
+    function render() {
+      const b = document.getElementById('box');
+      if (mode === 'forgot') {
+        b.innerHTML = `<h1 style="font-size:1.5rem">Mot de passe oublié</h1><p class="text-2">Saisissez votre e-mail ou numéro : nous vous enverrons un code de réinitialisation valable 15 minutes.</p>
+          <form id="f" class="stack" novalidate>${field('E-mail ou téléphone', 'ident', 'text', 'req', 'autocomplete="username" placeholder="034 12 345 67 ou nom@exemple.mg"')}
+          <button class="btn btn-primary btn-lg btn-block">Envoyer le code</button></form>
+          <p class="center small" style="margin-top:16px"><a href="#" data-mode="login" style="color:var(--primary);font-weight:600">${icon('chevron-left', 'sm')} Retour à la connexion</a></p>`;
+        return;
+      }
+      b.innerHTML = `<div class="seg" role="tablist"><button class="${mode === 'login' ? 'on' : ''}" data-mode="login">Se connecter</button><button class="${mode === 'register' ? 'on' : ''}" data-mode="register">Créer un compte</button></div>
+        ${next.includes('commande') ? `<div class="alert alert-info" style="margin-bottom:14px">${icon('info')}<span>Connectez-vous pour finaliser votre commande, ou <a href="#" data-guest style="font-weight:700">continuez en invité</a>.</span></div>` : ''}
+        <form id="f" class="stack" novalidate>
+        ${mode === 'login' ? `
+          ${field('E-mail ou téléphone', 'ident', 'text', 'req', 'autocomplete="username" placeholder="034 12 345 67 ou nom@exemple.mg"')}
+          <div class="field"><div class="row between"><label for="pwd">Mot de passe <span class="req">*</span></label><a href="#" data-mode="forgot" class="small" style="color:var(--primary);font-weight:600">Mot de passe oublié ?</a></div>
+            <div style="position:relative"><input class="input" id="pwd" name="pwd" type="password" data-rule="req" autocomplete="current-password" style="padding-right:48px"><button type="button" class="btn btn-ghost btn-icon btn-sm" data-show style="position:absolute;right:4px;top:5px" aria-label="Afficher le mot de passe">${icon('eye', 'sm')}</button></div><span class="err"></span></div>
+          <label class="check"><input type="checkbox" checked> Rester connecté sur cet appareil</label>
+          <div class="alert alert-danger hidden" id="login-err">${icon('alert')}<span></span></div>
+          <button class="btn btn-primary btn-lg btn-block">Se connecter</button>` : `
+          <div class="form-grid two">${field('Prénom', 'prenom', 'text', 'req', 'autocomplete="given-name"')}${field('Nom', 'nom', 'text', 'req', 'autocomplete="family-name"')}</div>
+          ${field('Téléphone mobile', 'tel', 'tel', 'req tel', 'inputmode="tel" autocomplete="tel" placeholder="034 12 345 67"')}
+          ${field('E-mail', 'email', 'email', 'email', 'autocomplete="email" placeholder="facultatif — pour recevoir vos factures"')}
+          ${field('Mot de passe', 'pwd', 'password', 'req pwd', 'autocomplete="new-password"')}
+          <span class="hint xs muted" style="margin-top:-6px;display:block">8 caractères minimum, avec lettres et chiffres.</span>
+          <div class="field"><label class="check" style="font-weight:400;color:var(--text)"><input type="checkbox" id="cgu"> J’accepte les <a href="infos.html#cgv" style="color:var(--primary);font-weight:600">conditions d’utilisation</a> et la <a href="infos.html#confidentialite" style="color:var(--primary);font-weight:600">politique de confidentialité</a>.</label><span class="err">Veuillez accepter les conditions.</span></div>
+          <label class="check"><input type="checkbox"> Recevoir les promotions par SMS / WhatsApp</label>
+          <button class="btn btn-primary btn-lg btn-block">Créer mon compte</button>`}
+        </form>
+        <div class="divider">ou</div>
+        <button class="btn btn-block" data-otp>${icon('phone', 'sm')} Recevoir un code par SMS</button>
+        <p class="xs muted center" style="margin-top:14px">${icon('lock', 'sm')} Connexion sécurisée. Après 5 tentatives échouées, le compte est temporairement bloqué.</p>`;
+    }
+
+    function otpModal(tel) {
+      modal({ title: 'Code de vérification', tone: 'info', icon: 'phone',
+        body: `<p>Un code à 6 chiffres a été envoyé par SMS au <b>${esc(tel)}</b>.</p><div class="field"><input class="input" id="otp" inputmode="numeric" maxlength="6" placeholder="• • • • • •" style="text-align:center;letter-spacing:.5em;font-size:1.3rem;font-weight:700"><span class="err"></span></div><p class="xs muted">Maquette : saisissez n’importe quels 6 chiffres. <a href="#" style="color:var(--primary)">Renvoyer le code</a> (disponible dans 60 s)</p>`,
+        actions: [{ label: 'Annuler' }, { label: 'Valider', cls: 'btn-primary', onClick(bd) {
+          const v = bd.querySelector('#otp').value; const f = bd.querySelector('.field');
+          if (!/^\d{6}$/.test(v)) { f.classList.add('error'); f.querySelector('.err').textContent = 'Le code doit contenir 6 chiffres.'; return false; }
+          App.User.login(); toast('Connexion réussie'); setTimeout(() => location.href = next, 500);
+        } }] });
+    }
+
+    document.addEventListener('click', e => {
+      const m = e.target.closest('[data-mode]'); if (m) { e.preventDefault(); mode = m.dataset.mode; history.replaceState(null, '', mode === 'register' ? '#inscription' : mode === 'forgot' ? '#oubli' : '#'); render(); }
+      if (e.target.closest('[data-show]')) { const p = document.getElementById('pwd'); p.type = p.type === 'password' ? 'text' : 'password'; }
+      if (e.target.closest('[data-otp]')) {
+        modal({ title: 'Connexion par SMS', tone: 'info', icon: 'phone', body: `<div class="field"><label>Numéro de téléphone</label><input class="input" id="otp-tel" type="tel" inputmode="tel" placeholder="034 12 345 67"><span class="err"></span></div>`,
+          actions: [{ label: 'Annuler' }, { label: 'Recevoir le code', cls: 'btn-primary', onClick(bd) {
+            const t = bd.querySelector('#otp-tel').value.trim(); const f = bd.querySelector('.field');
+            if (!App.RX.telMg.test(t)) { f.classList.add('error'); f.querySelector('.err').textContent = 'Numéro malgache invalide.'; return false; }
+            setTimeout(() => otpModal(t), 50);
+          } }] });
+      }
+      if (e.target.closest('[data-guest]')) { e.preventDefault(); App.User.login(); location.href = 'commande.html'; }
+    });
+
+    document.addEventListener('submit', e => {
+      e.preventDefault(); const f = e.target;
+      if (!validate(f)) return;
+      if (mode === 'forgot') { toast('Si un compte existe, un code vient d’être envoyé.'); otpModal(f.ident.value); return; }
+      if (mode === 'register') {
+        const c = document.getElementById('cgu'); const fc = c.closest('.field');
+        fc.classList.toggle('error', !c.checked); if (!c.checked) return;
+        otpModal(f.tel.value); return;
+      }
+      // Connexion : démonstration d'un échec puis limitation des tentatives
+      if (f.pwd.value !== 'demo1234' && tries < 4) {
+        tries++; const er = document.getElementById('login-err'); er.classList.remove('hidden');
+        er.querySelector('span').innerHTML = `Identifiant ou mot de passe incorrect. Tentative ${tries}/5.${tries >= 3 ? ' <b>Attention : blocage de 15 minutes après 5 échecs.</b>' : ''}<br><span class="xs">Maquette : mot de passe de démonstration « demo1234 ».</span>`;
+        return;
+      }
+      if (tries >= 4 && f.pwd.value !== 'demo1234') { modal({ title: 'Compte temporairement bloqué', tone: 'danger', body: '<p>Trop de tentatives échouées. Réessayez dans 15 minutes ou réinitialisez votre mot de passe.</p>', actions: [{ label: 'Réinitialiser', cls: 'btn-primary', onClick: () => { mode = 'forgot'; render(); } }] }); return; }
+      App.User.login(); toast('Connexion réussie'); setTimeout(() => location.href = next, 400);
+    });
+    render();
+  </script>
+</body>
+</html>

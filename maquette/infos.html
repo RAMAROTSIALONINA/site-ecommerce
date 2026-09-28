@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Informations légales — Site E_commerce</title>
+  <meta name="description" content="Conditions générales de vente, politique de confidentialité, livraison et retours de Site E_commerce.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="infos">
+  <div id="app-header"></div>
+  <main class="container">
+    <nav class="breadcrumb" aria-label="Fil d’Ariane"><a href="index.html">Accueil</a><svg class="ico" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><span id="crumb">Informations</span></nav>
+    <div class="info-layout" style="margin-top:10px">
+      <aside class="card acc-nav" id="nav"></aside>
+      <article class="card card-pad prose" id="doc" style="max-width:none"></article>
+    </div>
+  </main>
+  <div id="app-footer"></div>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, fmt } = App;
+    const DOCS = {
+      livraison: ['truck', 'Livraison & retours', `
+        <h1>Politique de livraison et retours</h1><p class="muted small">Dernière mise à jour : 28 septembre 2026</p>
+        <h2>1. Zones et tarifs</h2><p>Les frais sont calculés automatiquement selon l’adresse, avant le paiement. Un seul frais s’applique par commande, même si elle contient des articles de plusieurs vendeurs.</p>
+        <table><thead><tr><th>Zone</th><th>Frais</th><th>Délai indicatif</th></tr></thead><tbody>${DB.zones.map(z => `<tr><td><b>${z.nom}</b><br><span class="small">${z.detail}</span></td><td>${z.frais ? fmt(z.frais) : 'Gratuit'}</td><td>${z.delai}</td></tr>`).join('')}</tbody></table>
+        <h2>2. Adresse de livraison</h2><p>Pour garantir une livraison rapide, l’adresse comprend : région, ville, commune, fokontany, adresse précise et un point de repère. Le livreur contacte le client par téléphone avant son passage.</p>
+        <h2>3. Suivi</h2><p>Chaque commande passe par les statuts : <b>À préparer → Expédiée → En livraison → Livrée</b>. Le client est informé à chaque étape par SMS, e-mail ou WhatsApp selon ses préférences.</p>
+        <h2>4. Retours</h2><p>Le client dispose de <b>7 jours</b> après la livraison pour demander un retour depuis « Mes commandes », pour un produit non utilisé et dans son emballage d’origine. Les produits alimentaires ouverts, cosmétiques descellés et articles personnalisés ne sont pas repris, sauf défaut.</p>
+        <h2>5. Remboursements</h2><p>Après validation du retour, le remboursement est effectué sous 72 h sur le moyen de paiement initial (Mobile Money, carte) ou par virement.</p>`],
+      cgv: ['file', 'Conditions générales de vente', `
+        <h1>Conditions générales de vente</h1><p class="muted small">Version 1.0 — 28 septembre 2026</p>
+        <h2>1. Objet</h2><p>Les présentes conditions régissent les ventes conclues sur la plateforme Site E_commerce entre les clients et les vendeurs partenaires. Site E_commerce agit en qualité d’intermédiaire (place de marché) et encaisse les paiements pour le compte des vendeurs.</p>
+        <h2>2. Prix</h2><p>Les prix sont indiqués en Ariary (MGA), toutes taxes comprises selon le régime fiscal de chaque vendeur. Les frais de livraison sont affichés avant la validation de la commande.</p>
+        <h2>3. Commande</h2><p>La commande est confirmée après acceptation des présentes CGV. Un numéro de commande unique est attribué et communiqué au client. La disponibilité du stock est vérifiée au moment de la validation.</p>
+        <h2>4. Paiement</h2><p>Moyens acceptés : paiement à la livraison (jusqu’à 1 000 000 Ar), Mobile Money (MVola, Orange Money, Airtel Money), virement bancaire, carte bancaire via un prestataire sécurisé. Une commande dont le paiement échoue est conservée 24 h avant annulation automatique.</p>
+        <h2>5. Annulation</h2><p>Le client peut annuler sans frais tant que la commande n’est pas expédiée. Au-delà, la procédure de retour s’applique.</p>
+        <h2>6. Garanties</h2><p>Les vendeurs garantissent la conformité des produits. Les produits électroniques bénéficient d’une garantie vendeur de 12 mois minimum.</p>
+        <h2>7. Avis clients</h2><p>Seuls les clients ayant reçu un produit peuvent le noter (1 à 5 étoiles). Les avis sont modérés avant publication.</p>
+        <h2>8. Litiges</h2><p>En cas de litige, le service client propose une médiation entre le client et le vendeur. À défaut d’accord, les tribunaux d’Antananarivo sont compétents.</p>`],
+      confidentialite: ['lock', 'Confidentialité', `
+        <h1>Politique de confidentialité</h1><p class="muted small">Dernière mise à jour : 28 septembre 2026</p>
+        <h2>Données collectées</h2><p>Identité, coordonnées, adresses de livraison, historique de commandes et de paiements. Aucune donnée de carte bancaire n’est stockée : elles sont traitées par le prestataire de paiement.</p>
+        <h2>Finalités</h2><ul><li>Traitement et livraison des commandes</li><li>Paiement et facturation</li><li>Service client et notifications de suivi</li><li>Prévention de la fraude et sécurité</li><li>Marketing, uniquement avec votre accord</li></ul>
+        <h2>Partage</h2><p>Les vendeurs reçoivent uniquement les informations nécessaires à la préparation (nom, articles) ; le livreur reçoit l’adresse et le téléphone.</p>
+        <h2>Sécurité</h2><p>HTTPS obligatoire, mots de passe hachés, accès restreints par rôles, journalisation des actions sensibles, sauvegardes régulières.</p>
+        <h2>Vos droits</h2><p>Accès, rectification, export et suppression depuis « Profil & sécurité » ou par e-mail à dpo@site-ecommerce.mg, conformément à la loi n° 2014-038 sur la protection des données à caractère personnel.</p>`]
+    };
+    function route() {
+      const k = DOCS[location.hash.slice(1)] ? location.hash.slice(1) : 'livraison';
+      document.getElementById('nav').innerHTML = Object.entries(DOCS).map(([id, d]) => `<a href="#${id}" class="${id === k ? 'on' : ''}">${icon(d[0])} ${d[1]}</a>`).join('') + `<a href="a-propos.html">${icon('info')} À propos</a><a href="contact.html">${icon('message')} Contact</a>`;
+      document.getElementById('doc').innerHTML = DOCS[k][2];
+      document.getElementById('crumb').textContent = DOCS[k][1];
+      document.title = DOCS[k][1] + ' — Site E_commerce';
+      scrollTo({ top: 0 });
+    }
+    addEventListener('hashchange', route); route();
+  </script>
+</body>
+</html>
