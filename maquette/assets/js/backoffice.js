@@ -66,7 +66,7 @@
       this.menu(menuId);
       const m = this.cfg.menu.find(x => x.id === menuId);
       document.getElementById('bo-title').innerHTML = m ? `<span class="muted">${esc(m.group)}</span>${icon('chevron-right', 'sm')}<b>${esc(m.label)}</b>` : '';
-      document.title = (m ? m.label + ' — ' : '') + 'Back-office · Site E_commerce';
+      document.title = (m ? m.label + ' — ' : '') + (this.cfg.key === 'vendeur' ? 'Espace vendeur' : 'Back-office') + ' · Site E_commerce';
       const v = document.getElementById('bo-view');
       if (!this.allowed(menuId)) {
         v.innerHTML = `<div class="panel denied">${icon('lock')}<h2>Accès refusé</h2><p class="text-2">Le rôle « ${esc(this.cfg.roles.find(x => x.id === this.role).nom)} » n’a pas accès au module « ${esc(this.cfg.menu.find(m => m.id === menuId).label)} ».</p><p class="xs muted">Contrôle d’accès par rôle appliqué côté serveur (API) — la maquette le simule ici.</p><a class="btn btn-primary" href="#${this.cfg.menu[0].id}">Retour au tableau de bord</a></div>`;
