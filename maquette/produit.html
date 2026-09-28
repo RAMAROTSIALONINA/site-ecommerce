@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0F766E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
 </head>
 <body data-page="produit">
   <div id="app-header"></div>
@@ -36,9 +36,9 @@
   <div class="sticky-buy" id="sticky"></div>
   <div id="app-footer"></div>
 
-  <script src="assets/js/data.js?v=2"></script>
-  <script src="assets/js/core.js?v=2"></script>
-  <script src="assets/js/shop.js?v=2"></script>
+  <script src="assets/js/data.js?v=3"></script>
+  <script src="assets/js/core.js?v=3"></script>
+  <script src="assets/js/shop.js?v=3"></script>
   <script>
     const { icon, P, V, C, fmt, esc, pv, stars, priceHtml, stockHtml, badgesHtml, dispo, productCard, Cart, Favs, toast, modal } = App;
     const p = P(App.qs('id')) || DB.produits[8];
@@ -55,48 +55,97 @@
 
     document.getElementById('crumb').innerHTML = `<a href="index.html">Accueil</a>${icon('chevron-right')}<a href="catalogue.html?cat=${c.id}">${c.nom}</a>${icon('chevron-right')}<a href="catalogue.html?cat=${c.id}">${esc(p.sous)}</a>${icon('chevron-right')}<span>${esc(p.nom)}</span>`;
 
+    const POINTS = {
+      mode: ['Matières contrôlées par le vendeur', 'Guide des tailles disponible', 'Échange de taille sous 7 jours'],
+      tech: ['Produit neuf, garanti 12 mois', 'Facture fournie', 'Compatible avec les réseaux Telma, Orange et Airtel'],
+      maison: ['Robuste, pour un usage quotidien', 'Entretien facile', 'Sélectionné par un vendeur d’Antananarivo'],
+      beaute: ['Formule naturelle', 'Produit à Madagascar', 'Conserver à l’abri de la chaleur'],
+      epicerie: ['Filière courte, en direct du producteur', 'Conditionnement hermétique', 'Origine Madagascar garantie'],
+      artisanat: ['Fait main par des artisans malgaches', 'Chaque pièce est unique', 'Matériaux naturels']
+    };
+    let zone = App.store.get('zone', 'tana-centre');
+    // Date de livraison estimée : délai de la zone + acheminement si le vendeur est hors d’Antananarivo
+    function eta(zid) {
+      const jours = { 'tana-centre': 1, 'tana-peri': 2, 'grandes-villes': 4, autres: 7, retrait: 1 }[zid] || 4;
+      const d = new Date(); d.setDate(d.getDate() + jours + (v.ville === 'Antananarivo' ? 0 : 2));
+      return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+
     function render() {
-      const d = dispo(p);
+      const d = dispo(p); const z = App.Z(zone);
       const variants = p.variantes ? Object.entries(p.variantes).map(([k, vals]) => `
         <div class="variant-group"><div class="lbl">${k} : <b style="color:var(--text)">${sel[k] || '<span class="muted">à choisir</span>'}</b></div>
         <div class="opts" role="radiogroup" aria-label="${k}">${vals.map(x => `<button class="opt ${sel[k] === x ? 'on' : ''}" role="radio" aria-checked="${sel[k] === x}" data-g="${k}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`).join('') : '';
+      const stockBlock = d <= 0 ? `<div class="stock-box out">${icon('alert', 'sm')} Rupture de stock — revenez bientôt ou activez l’alerte</div>`
+        : d <= p.seuil ? `<div class="stock-box low"><div class="row between"><span>${icon('clock', 'sm')} Plus que <b>${d}</b> en stock — commandez vite</span></div><div class="stock-bar"><i style="width:${Math.max(8, d / (p.seuil * 2) * 100)}%"></i></div></div>`
+          : `<div class="stock-box ok">${icon('check', 'sm')} En stock · expédié sous 48 h par le vendeur</div>`;
       document.getElementById('pdp').innerHTML = `
         <div class="gallery">
-          <div style="position:relative">${pv(p, '', photo)}<div class="badges" style="position:absolute;top:16px;left:16px;display:flex;gap:6px;z-index:3">${badgesHtml(p)}</div></div>
-          <div class="thumbs">${[0, 1, 2, 3].map(i => `<div data-photo="${i}" style="border-radius:12px;cursor:pointer" role="button" aria-label="Photo ${i + 1}">${pv(p, 'sm ' + (photo === i ? 'on' : ''), i)}</div>`).join('')}</div>
-          <p class="xs muted center" style="margin-top:8px">Photo d’illustration : ${esc(DB.credits[p.id] || '—')} / Unsplash</p>
+          <div class="thumbs">${[0, 1, 2, 3].map(i => `<div data-photo="${i}" class="${photo === i ? 'on' : ''}" role="button" tabindex="0" aria-label="Photo ${i + 1}">${pv(p, 'sm', i)}</div>`).join('')}</div>
+          <div class="main-img" data-lightbox title="Cliquer pour agrandir">${pv(p, '', photo)}
+            <div class="badges">${badgesHtml(p)}</div>
+            <span class="zoom-hint">${icon('search', 'sm')} Agrandir</span>
+          </div>
+          <p class="credit xs muted">Photo d’illustration : ${esc(DB.credits[p.id] || '—')} / Unsplash</p>
         </div>
         <div class="pdp-info">
-          <a href="boutique.html?id=${v.id}" class="small" style="color:var(--primary);font-weight:600">${esc(v.nom)}</a>
+          <a href="boutique.html?id=${v.id}" class="pdp-vendor">${icon('store', 'sm')} ${esc(v.nom)}${v.verifie ? ` <span class="verified">${icon('shield')} Vérifié</span>` : ''}</a>
           <h1>${esc(p.nom)}</h1>
           <div class="row wrap small" style="gap:10px">
             <span class="rating"><span class="stars">${stars(p.note)}</span><b style="color:var(--text)">${p.note.toFixed(1)}</b></span>
-            <a href="#" data-goto="avis" class="muted">${p.avis} avis</a><span class="muted">·</span><span class="muted">${App.fmtN(p.ventes)} vendus</span><span class="muted">·</span><span class="muted">Réf. ${p.sku}</span>
+            <a href="#" data-goto="avis" style="color:var(--primary);font-weight:600">${p.avis} avis</a><span class="muted">·</span><span class="muted">${App.fmtN(p.ventes)} vendus</span><span class="muted">·</span><span class="muted">Réf. ${p.sku}</span>
           </div>
-          <div style="margin:16px 0 6px">${priceHtml(p, true)}</div>
-          ${p.promo != null ? `<div class="small" style="color:var(--success);font-weight:600">Vous économisez ${fmt(p.prix - p.promo)} (-${App.pct(p)} %)</div>` : ''}
-          <div style="margin-top:10px">${stockHtml(p)}</div>
+          <div class="price-box">
+            <div class="row wrap" style="gap:12px;align-items:center">${priceHtml(p, true)}${p.promo != null ? `<span class="badge badge-promo" style="font-size:.85rem;padding:5px 10px">-${App.pct(p)} %</span>` : ''}</div>
+            ${p.promo != null ? `<div class="small" style="color:var(--success);font-weight:700;margin-top:4px">Vous économisez ${fmt(p.prix - p.promo)}</div>` : ''}
+            <div class="xs muted" style="margin-top:6px">Prix TTC en Ariary · payez avec</div>
+            <div class="pay-chips"><span style="background:#E30613">MVola</span><span style="background:#FF7900">Orange Money</span><span style="background:#D6001C">Airtel Money</span><span style="background:#0F172A">Carte</span><span style="background:#475569">À la livraison</span></div>
+          </div>
+          <ul class="check-list">${POINTS[p.cat].map(t => `<li>${icon('check', 'sm')} ${t}</li>`).join('')}</ul>
+          ${stockBlock}
           ${variants}
           <div class="buy-row">
             <div class="qty" aria-label="Quantité"><button data-q="-1" aria-label="Diminuer">${icon('minus', 'sm')}</button><input id="qte" type="number" min="1" max="${d}" value="${qte}" inputmode="numeric" aria-label="Quantité"><button data-q="1" aria-label="Augmenter">${icon('plus', 'sm')}</button></div>
             <button class="btn btn-primary btn-lg" data-buy ${d <= 0 ? 'disabled' : ''}>${icon('cart')} ${d <= 0 ? 'Rupture de stock' : 'Ajouter au panier'}</button>
             <button class="btn btn-lg btn-icon" data-fav="${p.id}" aria-label="Favori" style="${Favs.has(p.id) ? 'color:#E11D48' : ''}">${icon('heart')}</button>
           </div>
-          ${d > 0 ? `<button class="btn btn-block btn-soft" data-buy="now">Acheter maintenant</button>` : `<button class="btn btn-block" data-notify>${icon('bell', 'sm')} M’avertir du retour en stock</button>`}
+          ${d > 0 ? `<button class="btn btn-block btn-lg btn-accent" data-buy="now">${icon('zap', 'sm')} Acheter maintenant</button>` : `<button class="btn btn-block" data-notify>${icon('bell', 'sm')} M’avertir du retour en stock</button>`}
           <div class="alert alert-danger hidden" id="err" style="margin-top:12px">${icon('alert')}<span></span></div>
-          <div class="info-list" style="margin-top:16px">
-            <div class="it">${icon('truck')}<div><b>Livraison</b><div class="muted small">Antananarivo centre : 5 000 Ar, sous 24 h · Grandes villes : 15 000 Ar, 2 à 4 jours. <a href="infos.html#livraison" style="color:var(--primary)">Tous les tarifs</a></div></div></div>
-            <div class="it">${icon('phone')}<div><b>Paiement</b><div class="muted small">MVola, Orange Money, Airtel Money, carte, virement ou paiement à la livraison</div></div></div>
-            <div class="it">${icon('refresh')}<div><b>Retour sous 7 jours</b><div class="muted small">Produit non utilisé, dans son emballage d’origine</div></div></div>
+          <div class="delivery-box">
+            <div class="row" style="gap:10px">${icon('pin')}<label for="zone-sel" class="small bold">Livrer à</label>
+              <select class="select" id="zone-sel">${DB.zones.filter(x => x.actif).map(x => `<option value="${x.id}" ${x.id === zone ? 'selected' : ''}>${x.nom}</option>`).join('')}</select></div>
+            <div class="row" style="gap:10px;margin-top:10px">${icon('truck')}<div class="small"><b>${z.id === 'retrait' ? 'Disponible au point relais' : 'Livraison estimée'} ${eta(zone)}</b><div class="muted">${z.frais ? fmt(z.frais) : 'Gratuit'} · un seul frais par commande${v.ville === 'Antananarivo' ? '' : ' · expédié depuis ' + v.ville}</div></div></div>
+          </div>
+          <div class="trust-row">
+            <div>${icon('lock')}<span>Paiement sécurisé</span></div>
+            <div>${icon('refresh')}<span>Retour sous 7 jours</span></div>
+            <div>${icon('shield')}<span>Vendeur vérifié</span></div>
           </div>
           <div class="seller-box" style="--h:${v.hue}">
             <div class="v-avatar">${App.initials(v.nom)}</div>
-            <div class="grow"><div class="row" style="gap:6px"><b>${esc(v.nom)}</b>${v.verifie ? `<span class="verified">${icon('shield')} Vérifié</span>` : ''}</div>
-              <div class="xs muted">${v.ville} · ${v.note} ★ · ${App.fmtN(v.ventes)} ventes · répond en moins de 2 h</div></div>
+            <div class="grow"><b>${esc(v.nom)}</b><div class="xs muted">${v.ville} · ${v.note} ★ · ${App.fmtN(v.ventes)} ventes · répond en moins de 2 h</div></div>
             <a class="btn btn-sm" href="boutique.html?id=${v.id}">Voir la boutique</a>
           </div>
         </div>`;
-      document.getElementById('sticky').innerHTML = `<div class="grow">${priceHtml(p)}</div><button class="btn btn-primary" data-buy ${d <= 0 ? 'disabled' : ''}>${icon('cart', 'sm')} Ajouter</button>`;
+      document.getElementById('sticky').innerHTML = `<div class="grow">${priceHtml(p)}</div><button class="btn btn-primary" data-buy ${d <= 0 ? 'disabled' : ''}>${icon('cart', 'sm')} Ajouter au panier</button>`;
+    }
+
+    // Zoom au survol (souris uniquement) — le clic ouvre la visionneuse, utilisable au doigt
+    document.addEventListener('pointermove', e => {
+      const m = e.target.closest('.main-img'); if (!m || e.pointerType !== 'mouse') return;
+      const img = m.querySelector('img'); if (!img) return;
+      if (!m.classList.contains('zooming')) { img.dataset.st = img.getAttribute('style') || ''; m.classList.add('zooming'); }
+      const r = m.getBoundingClientRect();
+      img.style.transformOrigin = ((e.clientX - r.left) / r.width * 100) + '% ' + ((e.clientY - r.top) / r.height * 100) + '%';
+    });
+    document.addEventListener('pointerout', e => {
+      const m = e.target.closest('.main-img'); if (!m || m.contains(e.relatedTarget)) return;
+      const img = m.querySelector('img'); m.classList.remove('zooming'); if (img) img.setAttribute('style', img.dataset.st || '');
+    });
+    function lightbox() {
+      modal({ title: esc(p.nom), noIcon: true, wide: true,
+        body: `<div class="lb-main">${pv(p, '', photo)}</div><div class="thumbs lb-thumbs">${[0, 1, 2, 3].map(i => `<div data-lb="${i}" class="${photo === i ? 'on' : ''}" role="button" aria-label="Photo ${i + 1}">${pv(p, 'sm', i)}</div>`).join('')}</div>`,
+        onOpen(bd) { bd.addEventListener('click', ev => { const t = ev.target.closest('[data-lb]'); if (!t) return; photo = +t.dataset.lb; bd.querySelector('.lb-main').innerHTML = pv(p, '', photo); bd.querySelectorAll('[data-lb]').forEach(x => x.classList.toggle('on', x === t)); render(); }); } });
     }
 
     function err(msg) { const e = document.getElementById('err'); e.classList.toggle('hidden', !msg); e.querySelector('span').textContent = msg || ''; if (msg) e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
@@ -146,6 +195,7 @@
         if (n < 1) return; if (n > d) { err('Stock disponible : ' + d + ' unité(s) maximum.'); return; } inp.value = n; qte = n; err(''); }
       const b = e.target.closest('[data-buy]'); if (b) add(b.dataset.buy === 'now');
       const ph = e.target.closest('[data-photo]'); if (ph) { photo = +ph.dataset.photo; qte = +document.getElementById('qte').value || 1; render(); }
+      if (e.target.closest('[data-lightbox]')) lightbox();
       const t = e.target.closest('[data-tab]'); if (t) tab(t.dataset.tab);
       const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); tab(g.dataset.goto); document.getElementById('tabs').scrollIntoView({ behavior: 'smooth' }); }
       if (e.target.closest('[data-notify]')) modal({ title: 'Alerte de retour en stock', tone: 'info', icon: 'bell',
@@ -158,7 +208,9 @@
         onOpen(bd) { bd.addEventListener('click', ev => { const s = ev.target.closest('[data-star]'); if (!s) return; bd.querySelectorAll('[data-star] .ico').forEach((i, k) => { i.style.fill = k < +s.dataset.star ? 'currentColor' : 'none'; }); bd.dataset.note = s.dataset.star; }); },
         actions: [{ label: 'Annuler' }, { label: 'Envoyer mon avis', cls: 'btn-primary', onClick(bd) { if (!bd.dataset.note) { toast('Veuillez choisir une note de 1 à 5 étoiles.', 'error'); return false; } toast('Merci ! Votre avis sera publié après modération.'); } }] });
     });
+    document.addEventListener('keydown', e => { const ph = e.target.closest && e.target.closest('[data-photo]'); if (ph && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ph.click(); } });
     document.addEventListener('change', e => {
+      if (e.target.id === 'zone-sel') { zone = e.target.value; App.store.set('zone', zone); qte = +document.getElementById('qte').value || 1; render(); return; }
       if (e.target.id !== 'qte') return;
       const d = dispo(p); let n = parseInt(e.target.value, 10);
       if (!Number.isInteger(n) || n < 1) { n = 1; err('La quantité minimale est 1.'); }

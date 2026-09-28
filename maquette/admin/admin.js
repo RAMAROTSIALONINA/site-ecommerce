@@ -587,7 +587,7 @@
     searchPh: 'Commande, produit, client…',
     user: { get nom() { return me().nom; }, role: () => DB.roles.find(r => r.id === BO.role).nom },
     sideFoot: `<a class="bo-link" href="../vendeur/index.html">${icon('store')} Espace vendeur (démo)</a><a class="bo-link" href="../sommaire.html">${icon('list')} Sommaire des écrans</a>`,
-    notifs: [['warning', 'package', 'Nouvelle commande CMD-2026-001284', 'Il y a 18 min · MVola · 208 500 Ar'], ['danger', 'alert', 'Stock faible : Montre classique', '3 unités, seuil 4'], ['info', 'store', 'Demande vendeur : Toamasina Import', 'Dossier incomplet'], ['primary', 'star', '3 avis à modérer', 'Dont 1 contenu suspect']],
+    notifs: [['warning', 'package', 'Nouvelle commande CMD-2026-001284', 'Il y a 18 min · MVola · 113 500 Ar'], ['danger', 'alert', 'Stock faible : Montre classique', '3 unités, seuil 4'], ['info', 'store', 'Demande vendeur : Toamasina Import', 'Dossier incomplet'], ['primary', 'star', '3 avis à modérer', 'Dont 1 contenu suspect']],
     menu: [
       { id: 'dashboard', label: 'Tableau de bord', icon: 'grid', group: 'Pilotage' }, { id: 'rapports', label: 'Rapports', icon: 'chart', group: 'Pilotage' },
       { id: 'commandes', label: 'Commandes', icon: 'package', group: 'Ventes', count: nOrders }, { id: 'paiements', label: 'Paiements', icon: 'card', group: 'Ventes' },

@@ -246,17 +246,26 @@
   }
   function productCard(p, base) {
     base = base || '';
-    const v = V(p.vendeur); const out = dispo(p) <= 0;
+    const v = V(p.vendeur); const d = dispo(p); const out = d <= 0;
+    const url = `${base}produit.html?id=${p.id}`;
+    const flag = out ? '<span class="pc-flag out">Rupture de stock</span>' : d <= p.seuil ? `<span class="pc-flag">Plus que ${d} en stock</span>` : '';
+    const cta = out ? `<button class="btn btn-sm btn-block pc-cta" disabled>${icon('bell', 'sm')} Indisponible</button>`
+      : p.variantes ? `<button class="btn btn-sm btn-block btn-soft pc-cta" data-add="${p.id}">${icon('list', 'sm')} Choisir ${esc(Object.keys(p.variantes)[0].toLowerCase())}</button>`
+        : `<button class="btn btn-sm btn-block btn-primary pc-cta" data-add="${p.id}">${icon('cart', 'sm')} Ajouter</button>`;
     return `<article class="pcard ${out ? 'out' : ''}">
-      <div class="badges">${badgesHtml(p)}</div>
-      <button class="fav ${Favs.has(p.id) ? 'on' : ''}" data-fav="${p.id}" aria-label="Ajouter aux favoris">${icon('heart', 'sm')}</button>
-      <a href="${base}produit.html?id=${p.id}">${pv(p)}</a>
+      <div class="pc-media">
+        <a href="${url}" tabindex="-1" aria-hidden="true">${pv(p)}</a>
+        <div class="badges">${badgesHtml(p)}</div>
+        <button class="fav ${Favs.has(p.id) ? 'on' : ''}" data-fav="${p.id}" aria-label="Ajouter « ${esc(p.nom)} » aux favoris">${icon('heart', 'sm')}</button>
+        ${flag}
+      </div>
       <div class="pc-body">
-        <span class="pc-vendor">${icon('store', 'sm')} ${esc(v.nom)}</span>
-        <a href="${base}produit.html?id=${p.id}" class="pc-name">${esc(p.nom)}</a>
-        <span class="rating"><span class="stars">${stars(p.note)}</span>(${p.avis})</span>
-        <div class="pc-foot">${priceHtml(p)}
-          <button class="add" data-add="${p.id}" ${out ? 'disabled title="Rupture de stock"' : ''} aria-label="Ajouter au panier">${icon(p.variantes ? 'eye' : 'plus')}</button></div>
+        <span class="pc-vendor"><span class="vn">${esc(v.nom)}</span>${v.verifie ? icon('shield', 'sm') : ''}</span>
+        <a href="${url}" class="pc-name">${esc(p.nom)}</a>
+        <span class="rating"><span class="stars">${stars(p.note)}</span><b>${p.note.toFixed(1)}</b><span>(${p.avis})</span></span>
+        <div class="pc-price">${priceHtml(p)}${p.promo != null ? `<span class="pc-save">− ${fmt(p.prix - p.promo)}</span>` : ''}</div>
+        <span class="pc-ship">${icon('truck', 'sm')} ${v.ville === 'Antananarivo' ? 'Livré sous 24 h à Tana' : 'Expédié de ' + esc(v.ville) + ' · 2 à 4 j'}</span>
+        ${cta}
       </div></article>`;
   }
   const statusPill = (map, k) => { const s = DB[map][k]; return s ? `<span class="badge badge-${s.c}"><span class="dot"></span>${s.l}</span>` : ''; };

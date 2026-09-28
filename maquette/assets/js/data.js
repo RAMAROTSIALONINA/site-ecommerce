@@ -24,30 +24,30 @@ window.DB = (function () {
 
   // P = [id, sku, nom, cat, sous, vendeur, prix, promo, stock, seuil, note, avis, icon, variantes, badge, ventes]
   const raw = [
-    ['p1', 'TM-RB-001', 'Robe imprimée lamba, coupe évasée', 'mode', 'Femme', 'v1', 85000, 69000, 14, 5, 4.7, 38, 'shirt', { Taille: ['S', 'M', 'L', 'XL'] }, 'promo', 210],
-    ['p2', 'TM-CH-014', 'Chemise en lin homme, manches longues', 'mode', 'Homme', 'v1', 65000, null, 22, 5, 4.5, 21, 'shirt', { Taille: ['M', 'L', 'XL'] }, null, 132],
-    ['p3', 'TM-SC-007', 'Sac cabas en cuir de zébu', 'mode', 'Sacs', 'v1', 120000, null, 6, 3, 4.8, 17, 'bag', { Couleur: ['Naturel', 'Brun'] }, null, 64],
-    ['p4', 'TM-MT-002', 'Montre classique bracelet acier', 'mode', 'Montres', 'v1', 150000, 129000, 3, 4, 4.4, 12, 'watch', null, 'promo', 41],
-    ['p5', 'ID-SP-128', 'Smartphone Android 6,6″ — 128 Go, double SIM', 'tech', 'Smartphones', 'v2', 890000, 829000, 9, 5, 4.5, 74, 'phone', { Couleur: ['Noir', 'Bleu nuit'] }, 'promo', 188],
-    ['p6', 'ID-PC-512', 'Ordinateur portable 15,6″ — 8 Go / SSD 512 Go', 'tech', 'Ordinateurs', 'v2', 2450000, null, 4, 3, 4.6, 29, 'laptop', null, null, 57],
-    ['p7', 'ID-AU-033', 'Écouteurs sans fil Bluetooth, réduction de bruit', 'tech', 'Audio', 'v2', 95000, 75000, 30, 8, 4.3, 112, 'headphones', { Couleur: ['Blanc', 'Noir'] }, 'promo', 402],
-    ['p8', 'ID-AC-020', 'Batterie externe 20 000 mAh, charge rapide', 'tech', 'Accessoires', 'v2', 65000, null, 0, 10, 4.2, 58, 'battery', null, null, 311],
-    ['p9', 'SS-VA-100', 'Vanille bourbon de la SAVA — gousses 100 g', 'epicerie', 'Vanille & épices', 'v3', 95000, null, 40, 10, 4.9, 146, 'leaf', null, 'best', 690],
-    ['p10', 'SS-CF-500', 'Café arabica torréfié des Hautes Terres — 500 g', 'epicerie', 'Café & cacao', 'v3', 28000, null, 55, 15, 4.7, 88, 'coffee', { Mouture: ['Grains', 'Moulu'] }, null, 520],
-    ['p11', 'SS-MI-500', 'Miel de litchi — pot de 500 g', 'epicerie', 'Miel & confitures', 'v3', 22000, 18500, 26, 10, 4.8, 64, 'droplet', null, 'promo', 377],
-    ['p12', 'SS-CA-250', 'Cacao en poudre du Sambirano — 250 g', 'epicerie', 'Café & cacao', 'v3', 18000, null, 34, 10, 4.6, 41, 'coffee', null, null, 198],
-    ['p13', 'SS-PV-050', 'Poivre sauvage voatsiperifery — 50 g', 'epicerie', 'Vanille & épices', 'v3', 24000, null, 18, 8, 4.9, 22, 'leaf', null, 'new', 76],
-    ['p14', 'AR-PN-011', 'Panier en raphia tressé main', 'artisanat', 'Raphia', 'v4', 45000, null, 20, 5, 4.8, 33, 'gift', { Couleur: ['Naturel', 'Multicolore'] }, null, 143],
-    ['p15', 'AR-CP-004', 'Chapeau en raphia à large bord', 'artisanat', 'Raphia', 'v4', 35000, null, 12, 5, 4.6, 19, 'gift', { Taille: ['M', 'L'] }, null, 88],
-    ['p16', 'AR-EC-021', 'Écharpe en soie sauvage (landibe)', 'artisanat', 'Soie & textile', 'v4', 110000, null, 5, 3, 4.9, 14, 'gift', null, 'new', 29],
-    ['p17', 'AR-SC-002', 'Sculpture zébu en palissandre', 'artisanat', 'Bois', 'v4', 180000, null, 2, 2, 5.0, 7, 'gift', null, null, 12],
-    ['p18', 'MA-MR-003', 'Lot de 3 marmites en aluminium (vilany)', 'maison', 'Cuisine', 'v5', 75000, null, 16, 5, 4.4, 27, 'pot', null, null, 154],
-    ['p19', 'MA-LP-008', 'Lampe de table en rabane', 'maison', 'Décoration', 'v5', 58000, null, 9, 4, 4.2, 11, 'lamp', null, null, 46],
-    ['p20', 'MA-PL-2P', 'Parure de lit coton 2 places', 'maison', 'Linge de maison', 'v5', 135000, 115000, 7, 4, 4.5, 23, 'bed', { Couleur: ['Blanc', 'Sable', 'Bleu'] }, 'promo', 71],
-    ['p21', 'YN-HE-010', 'Huile essentielle d’ylang-ylang — 10 ml', 'beaute', 'Huiles essentielles', 'v6', 32000, null, 45, 10, 4.8, 96, 'droplet', null, 'best', 460],
-    ['p22', 'YN-SV-003', 'Savons karité & vanille — lot de 3', 'beaute', 'Hygiène', 'v6', 18000, null, 60, 15, 4.6, 52, 'sparkles', null, null, 305],
-    ['p23', 'YN-CR-050', 'Crème visage à la centella (talapetraka) — 50 ml', 'beaute', 'Soins', 'v6', 48000, null, 14, 5, 4.7, 18, 'sparkles', null, 'new', 58],
-    ['p24', 'YN-HC-250', 'Huile de coco vierge — 250 ml', 'beaute', 'Soins', 'v6', 16000, 13500, 38, 10, 4.5, 44, 'droplet', null, 'promo', 267]
+    ['p1', 'TM-RB-001', 'Robe imprimée lamba, coupe évasée', 'mode', 'Femme', 'v1', 45000, 38000, 14, 5, 4.7, 38, 'shirt', { Taille: ['S', 'M', 'L', 'XL'] }, 'promo', 210],
+    ['p2', 'TM-CH-014', 'Chemise en lin homme, manches longues', 'mode', 'Homme', 'v1', 38000, null, 22, 5, 4.5, 21, 'shirt', { Taille: ['M', 'L', 'XL'] }, null, 132],
+    ['p3', 'TM-SC-007', 'Sac cabas en cuir de zébu', 'mode', 'Sacs', 'v1', 75000, null, 6, 3, 4.8, 17, 'bag', { Couleur: ['Naturel', 'Brun'] }, null, 64],
+    ['p4', 'TM-MT-002', 'Montre classique bracelet acier', 'mode', 'Montres', 'v1', 85000, 72000, 3, 4, 4.4, 12, 'watch', null, 'promo', 41],
+    ['p5', 'ID-SP-128', 'Smartphone Android 6,6″ — 128 Go, double SIM', 'tech', 'Smartphones', 'v2', 650000, 599000, 9, 5, 4.5, 74, 'phone', { Couleur: ['Noir', 'Bleu nuit'] }, 'promo', 188],
+    ['p6', 'ID-PC-512', 'Ordinateur portable 15,6″ — 8 Go / SSD 512 Go', 'tech', 'Ordinateurs', 'v2', 1950000, null, 4, 3, 4.6, 29, 'laptop', null, null, 57],
+    ['p7', 'ID-AU-033', 'Écouteurs sans fil Bluetooth, réduction de bruit', 'tech', 'Audio', 'v2', 55000, 45000, 30, 8, 4.3, 112, 'headphones', { Couleur: ['Blanc', 'Noir'] }, 'promo', 402],
+    ['p8', 'ID-AC-020', 'Batterie externe 20 000 mAh, charge rapide', 'tech', 'Accessoires', 'v2', 45000, null, 0, 10, 4.2, 58, 'battery', null, null, 311],
+    ['p9', 'SS-VA-100', 'Vanille bourbon de la SAVA — gousses 100 g', 'epicerie', 'Vanille & épices', 'v3', 48000, null, 40, 10, 4.9, 146, 'leaf', null, 'best', 690],
+    ['p10', 'SS-CF-500', 'Café arabica torréfié des Hautes Terres — 500 g', 'epicerie', 'Café & cacao', 'v3', 18000, null, 55, 15, 4.7, 88, 'coffee', { Mouture: ['Grains', 'Moulu'] }, null, 520],
+    ['p11', 'SS-MI-500', 'Miel de litchi — pot de 500 g', 'epicerie', 'Miel & confitures', 'v3', 15000, 12500, 26, 10, 4.8, 64, 'droplet', null, 'promo', 377],
+    ['p12', 'SS-CA-250', 'Cacao en poudre du Sambirano — 250 g', 'epicerie', 'Café & cacao', 'v3', 12000, null, 34, 10, 4.6, 41, 'coffee', null, null, 198],
+    ['p13', 'SS-PV-050', 'Poivre sauvage voatsiperifery — 50 g', 'epicerie', 'Vanille & épices', 'v3', 14000, null, 18, 8, 4.9, 22, 'leaf', null, 'new', 76],
+    ['p14', 'AR-PN-011', 'Panier en raphia tressé main', 'artisanat', 'Raphia', 'v4', 25000, null, 20, 5, 4.8, 33, 'gift', { Couleur: ['Naturel', 'Multicolore'] }, null, 143],
+    ['p15', 'AR-CP-004', 'Chapeau en raphia à large bord', 'artisanat', 'Raphia', 'v4', 18000, null, 12, 5, 4.6, 19, 'gift', { Taille: ['M', 'L'] }, null, 88],
+    ['p16', 'AR-EC-021', 'Écharpe en soie sauvage (landibe)', 'artisanat', 'Soie & textile', 'v4', 65000, null, 5, 3, 4.9, 14, 'gift', null, 'new', 29],
+    ['p17', 'AR-SC-002', 'Sculpture zébu en palissandre', 'artisanat', 'Bois', 'v4', 120000, null, 2, 2, 5.0, 7, 'gift', null, null, 12],
+    ['p18', 'MA-MR-003', 'Lot de 3 marmites en aluminium (vilany)', 'maison', 'Cuisine', 'v5', 45000, null, 16, 5, 4.4, 27, 'pot', null, null, 154],
+    ['p19', 'MA-LP-008', 'Lampe de table en rabane', 'maison', 'Décoration', 'v5', 35000, null, 9, 4, 4.2, 11, 'lamp', null, null, 46],
+    ['p20', 'MA-PL-2P', 'Parure de lit coton 2 places', 'maison', 'Linge de maison', 'v5', 85000, 72000, 7, 4, 4.5, 23, 'bed', { Couleur: ['Blanc', 'Sable', 'Bleu'] }, 'promo', 71],
+    ['p21', 'YN-HE-010', 'Huile essentielle d’ylang-ylang — 10 ml', 'beaute', 'Huiles essentielles', 'v6', 18000, null, 45, 10, 4.8, 96, 'droplet', null, 'best', 460],
+    ['p22', 'YN-SV-003', 'Savons karité & vanille — lot de 3', 'beaute', 'Hygiène', 'v6', 12000, null, 60, 15, 4.6, 52, 'sparkles', null, null, 305],
+    ['p23', 'YN-CR-050', 'Crème visage à la centella (talapetraka) — 50 ml', 'beaute', 'Soins', 'v6', 28000, null, 14, 5, 4.7, 18, 'sparkles', null, 'new', 58],
+    ['p24', 'YN-HC-250', 'Huile de coco vierge — 250 ml', 'beaute', 'Soins', 'v6', 10000, 8500, 38, 10, 4.5, 44, 'droplet', null, 'promo', 267]
   ];
   const descs = {
     mode: 'Pièce sélectionnée par notre vendeur partenaire. Matières contrôlées, finitions soignées et guide des tailles disponible.',
@@ -176,11 +176,11 @@ window.DB = (function () {
   const journal = [
     ['2026-09-28 09:44', 'Onja Ramanantsoa', 'Commande', 'Statut CMD-2026-001284 : paiement confirmé (MVola, réf. MP260928.0942.A81)', '102.16.44.12'],
     ['2026-09-28 09:10', 'Système', 'Stock', 'Alerte seuil : Montre classique bracelet acier (3 ≤ 4)', '—'],
-    ['2026-09-28 08:31', 'Sitraka Andrianina', 'Produit', 'Prix modifié : Écouteurs sans fil Bluetooth 95 000 → promo 75 000 Ar', '102.16.44.18'],
+    ['2026-09-28 08:31', 'Sitraka Andrianina', 'Produit', 'Prix modifié : Écouteurs sans fil Bluetooth 55 000 → promo 45 000 Ar', '102.16.44.18'],
     ['2026-09-28 08:02', 'Rindra Rakotomalala', 'Connexion', 'Connexion réussie (double authentification)', '41.188.12.7'],
     ['2026-09-27 22:14', 'Système', 'Sécurité', '5 tentatives de connexion échouées — compte admin@… bloqué 15 min', '197.149.3.90'],
     ['2026-09-27 18:20', 'Onja Ramanantsoa', 'Livraison', 'CMD-2026-001282 remise au livreur (zone Antananarivo centre)', '102.16.44.12'],
-    ['2026-09-27 16:40', 'Faly Rakotondrabe', 'Paiement', 'Remboursement CMD-2026-001274 : 110 500 Ar (Airtel Money)', '102.16.44.20'],
+    ['2026-09-27 16:40', 'Faly Rakotondrabe', 'Paiement', 'Remboursement CMD-2026-001274 : 68 500 Ar (Airtel Money)', '102.16.44.20'],
     ['2026-09-27 11:02', 'Miora Rasolofo', 'Vendeur', 'Nouvelle demande vendeur : Toamasina Import (dossier incomplet)', '102.16.44.25'],
     ['2026-09-26 18:36', 'Système', 'Paiement', 'Échec transaction carte CMD-2026-001279 (refus émetteur)', '—'],
     ['2026-09-26 09:00', 'Rindra Rakotomalala', 'Paramètres', 'Frais zone « Grandes villes » : 12 000 → 15 000 Ar', '41.188.12.7']
@@ -198,19 +198,19 @@ window.DB = (function () {
   ];
 
   const reversements = [
-    { id: 'RV-2026-0391', vendeur: 'v3', periode: '16–30 sept. 2026', brut: 1284000, statut: 'a_payer', moyen: 'Virement BOA' },
-    { id: 'RV-2026-0390', vendeur: 'v2', periode: '16–30 sept. 2026', brut: 4870000, statut: 'a_payer', moyen: 'Virement BNI' },
-    { id: 'RV-2026-0389', vendeur: 'v1', periode: '16–30 sept. 2026', brut: 912000, statut: 'a_payer', moyen: 'MVola' },
-    { id: 'RV-2026-0384', vendeur: 'v3', periode: '1–15 sept. 2026', brut: 1510000, statut: 'paye', moyen: 'Virement BOA', date: '2026-09-17' },
-    { id: 'RV-2026-0383', vendeur: 'v6', periode: '1–15 sept. 2026', brut: 642000, statut: 'paye', moyen: 'Orange Money', date: '2026-09-17' },
-    { id: 'RV-2026-0382', vendeur: 'v4', periode: '1–15 sept. 2026', brut: 388000, statut: 'paye', moyen: 'MVola', date: '2026-09-17' }
+    { id: 'RV-2026-0391', vendeur: 'v3', periode: '16–30 sept. 2026', brut: 706000, statut: 'a_payer', moyen: 'Virement BOA' },
+    { id: 'RV-2026-0390', vendeur: 'v2', periode: '16–30 sept. 2026', brut: 2680000, statut: 'a_payer', moyen: 'Virement BNI' },
+    { id: 'RV-2026-0389', vendeur: 'v1', periode: '16–30 sept. 2026', brut: 502000, statut: 'a_payer', moyen: 'MVola' },
+    { id: 'RV-2026-0384', vendeur: 'v3', periode: '1–15 sept. 2026', brut: 830000, statut: 'paye', moyen: 'Virement BOA', date: '2026-09-17' },
+    { id: 'RV-2026-0383', vendeur: 'v6', periode: '1–15 sept. 2026', brut: 353000, statut: 'paye', moyen: 'Orange Money', date: '2026-09-17' },
+    { id: 'RV-2026-0382', vendeur: 'v4', periode: '1–15 sept. 2026', brut: 213000, statut: 'paye', moyen: 'MVola', date: '2026-09-17' }
   ];
 
   // Ventes des 30 derniers jours (déterministe)
   const ventes30 = Array.from({ length: 30 }, (_, i) => {
-    const base = 2600000 + Math.round(Math.sin(i / 3.1) * 700000) + i * 38000 + ((i * 7919) % 5) * 180000;
+    const base = 1450000 + Math.round(Math.sin(i / 3.1) * 380000) + i * 21000 + ((i * 7919) % 5) * 100000;
     const d = new Date(2026, 7, 30 + i);
-    return { date: d, ca: base, commandes: Math.round(base / 92000) };
+    return { date: d, ca: base, commandes: Math.round(base / 52000) };
   });
 
   // ---------- Construction ----------
