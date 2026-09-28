@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Site E_commerce — La marketplace de Madagascar</title>
+  <meta name="description" content="Achetez en ligne auprès de vendeurs vérifiés à Madagascar : mode, high-tech, maison, produits locaux et artisanat. Paiement Mobile Money et livraison dans toute l’île.">
+  <meta name="theme-color" content="#0F766E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="home">
+  <div id="app-header"></div>
+
+  <main>
+    <!-- Héros -->
+    <section class="hero"><div class="container">
+      <div class="hero-grid">
+        <div class="hero-main">
+          <span class="eyebrow" id="hero-eyebrow"></span>
+          <h1>Le meilleur de Madagascar, livré chez vous.</h1>
+          <p>Plus de 120 vendeurs vérifiés, des milliers de produits et un paiement simple par Mobile Money. Commandez en quelques clics depuis votre téléphone.</p>
+          <div class="row wrap" style="margin-top:8px">
+            <a class="btn btn-lg btn-light" href="catalogue.html">Découvrir le catalogue</a>
+            <a class="btn btn-lg btn-outline-light" href="catalogue.html?promo=1">Voir les promotions</a>
+          </div>
+          <div class="hero-dots"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <div class="hero-side">
+          <a class="promo-tile glass" href="catalogue.html?cat=epicerie" style="background:linear-gradient(135deg,#ECFDF5cc,#FFFFFFcc)">
+            <div><span class="badge badge-success">Produits locaux</span><h3 style="margin-top:8px">Vanille & épices de la SAVA</h3><p>-15 % avec le code SAVA15</p></div>
+            <span style="font-weight:700;font-size:.85rem;color:var(--primary-700)">J’en profite →</span>
+            <span class="big-ico" style="color:#15803D"></span>
+          </a>
+          <a class="promo-tile glass" href="catalogue.html?cat=tech" style="background:linear-gradient(135deg,#EFF6FFcc,#FFFFFFcc)">
+            <div><span class="badge badge-info">High-tech</span><h3 style="margin-top:8px">Smartphones garantis 12 mois</h3><p>Livraison 24 h à Antananarivo</p></div>
+            <span style="font-weight:700;font-size:.85rem;color:var(--primary-700)">Découvrir →</span>
+          </a>
+        </div>
+      </div>
+      <div class="trust-bar" id="trust"></div>
+    </div></section>
+
+    <!-- Catégories -->
+    <section class="section" style="padding-top:18px"><div class="container">
+      <div class="section-head"><h2>Parcourir par catégorie</h2><a href="catalogue.html">Tout voir <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="cat-scroller" id="cats"></div>
+    </div></section>
+
+    <!-- Vente flash -->
+    <section class="section" style="padding-top:0"><div class="container">
+      <div class="flash">
+        <div class="section-head" style="flex-wrap:wrap">
+          <div class="row wrap"><h2 style="color:var(--accent)">Ventes flash</h2><span class="countdown" id="countdown" aria-label="Temps restant"></span></div>
+          <a href="catalogue.html?promo=1">Toutes les promotions <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a>
+        </div>
+        <div class="grid-products five" id="flash"></div>
+      </div>
+    </div></section>
+
+    <!-- Meilleures ventes -->
+    <section class="section" style="padding-top:0"><div class="container">
+      <div class="section-head"><h2>Meilleures ventes</h2><a href="catalogue.html?tri=ventes">Voir plus <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid-products" id="best"></div>
+    </div></section>
+
+    <!-- Boutiques -->
+    <section class="section" style="padding-top:0"><div class="container">
+      <div class="section-head"><h2>Boutiques à la une</h2><a href="boutiques.html">Toutes les boutiques <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="vendor-grid" id="vendors"></div>
+    </div></section>
+
+    <!-- Nouveautés -->
+    <section class="section" style="padding-top:0"><div class="container">
+      <div class="section-head"><h2>Produits locaux & artisanat</h2><a href="catalogue.html?cat=artisanat">Voir plus <svg class="ico sm" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid-products" id="local"></div>
+    </div></section>
+
+    <!-- Devenir vendeur -->
+    <section class="section" style="padding-top:0"><div class="container">
+      <div class="seller-cta">
+        <div>
+          <span class="badge" style="background:rgba(94,234,212,.15);color:#5EEAD4">Marketplace</span>
+          <h2 style="margin-top:12px">Vous êtes commerçant ou artisan ? Vendez partout à Madagascar.</h2>
+          <p style="color:#94A3B8">Ouvrez votre boutique en ligne gratuitement, gérez vos produits et vos commandes depuis votre téléphone, et recevez vos reversements par Mobile Money ou virement.</p>
+          <a class="btn btn-lg btn-primary" href="vendre.html">Ouvrir ma boutique</a>
+        </div>
+        <div class="kpis"><div><b>0 Ar</b><span>Frais d’ouverture</span></div><div><b>8–12 %</b><span>Commission par vente</span></div><div><b>15 j</b><span>Cycle de reversement</span></div></div>
+      </div>
+    </div></section>
+  </main>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/core.js"></script>
+  <script src="assets/js/shop.js"></script>
+  <script>
+    const { icon, productCard, pvCat, V, esc, stars } = App;
+    document.getElementById('hero-eyebrow').innerHTML = icon('zap', 'sm') + ' Nouveau : paiement MVola en 1 clic';
+    document.querySelector('.promo-tile .big-ico').outerHTML = icon('leaf', 'big-ico').replace('class="', 'style="color:#15803D" class="');
+
+    document.getElementById('trust').innerHTML = [
+      ['truck', 'Livraison dans toute l’île', 'Dès 5 000 Ar à Antananarivo'],
+      ['phone', 'Mobile Money', 'MVola · Orange Money · Airtel'],
+      ['shield', 'Vendeurs vérifiés', 'Identité et NIF contrôlés'],
+      ['message', 'Service client', 'Lun–Sam, 8 h–18 h · WhatsApp']
+    ].map(t => `<div class="trust-item glass"><span class="ti-ico">${icon(t[0])}</span><div><b>${t[1]}</b><span>${t[2]}</span></div></div>`).join('');
+
+    document.getElementById('cats').innerHTML = DB.categories.map(c => {
+      const n = DB.produits.filter(p => p.cat === c.id).length;
+      return `<a class="cat-tile" href="catalogue.html?cat=${c.id}">${pvCat(c)}<span>${c.nom}</span><small>${n * 57} articles</small></a>`;
+    }).join('');
+
+    const promos = DB.produits.filter(p => p.promo != null).slice(0, 5);
+    document.getElementById('flash').innerHTML = promos.map(p => productCard(p)).join('');
+    const best = [...DB.produits].sort((a, b) => b.ventes - a.ventes).slice(0, 8);
+    document.getElementById('best').innerHTML = best.map(p => productCard(p)).join('');
+    document.getElementById('local').innerHTML = DB.produits.filter(p => ['artisanat', 'epicerie'].includes(p.cat) && p.promo == null).slice(0, 8).map(p => productCard(p)).join('');
+
+    document.getElementById('vendors').innerHTML = DB.vendeurs.filter(v => v.statut === 'actif').slice(0, 6).map(v => `
+      <a class="vcard" href="boutique.html?id=${v.id}" style="--h:${v.hue}">
+        <div class="v-cover"></div>
+        <div class="v-body">
+          <div class="v-avatar">${App.initials(v.nom)}</div>
+          <div class="row between" style="margin-top:10px"><b>${esc(v.nom)}</b>${v.verifie ? `<span class="verified">${icon('shield')} Vérifié</span>` : ''}</div>
+          <div class="small muted">${icon('pin', 'sm')} ${v.ville} · depuis ${v.depuis}</div>
+          <div class="row" style="margin-top:8px;gap:8px"><span class="stars">${stars(v.note)}</span><span class="xs muted">${v.note} · ${v.avis} avis · ${App.fmtN(v.ventes)} ventes</span></div>
+        </div></a>`).join('');
+
+    // Compte à rebours (fin de la vente flash à minuit)
+    function tick() {
+      const now = new Date(); const end = new Date(now); end.setHours(23, 59, 59, 999);
+      let s = Math.max(0, Math.floor((end - now) / 1000));
+      const h = String(Math.floor(s / 3600)).padStart(2, '0'); s %= 3600;
+      const m = String(Math.floor(s / 60)).padStart(2, '0'); const sec = String(s % 60).padStart(2, '0');
+      document.getElementById('countdown').innerHTML = `<span class="small text-2">Se termine dans</span><b>${h}</b>:<b>${m}</b>:<b>${sec}</b>`;
+    }
+    tick(); setInterval(tick, 1000);
+  </script>
+</body>
+</html>
