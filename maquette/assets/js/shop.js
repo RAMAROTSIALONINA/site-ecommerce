@@ -109,8 +109,7 @@
       <a href="catalogue.html?focus=1" class="${is('search')}">${icon('search')}Recherche</a>
       <a href="panier.html" class="${is('panier')}">${icon('cart')}Panier<span class="count" data-cart-count>0</span></a>
       <a href="compte.html" class="${is('compte')}">${icon('user')}Compte</a>
-    </nav>
-    <div class="mock-flag no-print">Maquette · <a href="sommaire.html">Sommaire des écrans</a></div>`;
+    </nav>`;
   }
 
   function updateCount() {

@@ -22,7 +22,8 @@
           <div class="bo-main">
             <header class="bo-top">
               <button class="btn btn-ghost btn-icon bo-burger" data-side aria-label="Menu">${icon('menu')}</button>
-              <form class="search-box" id="bo-search"><input type="search" placeholder="${cfg.searchPh || 'Rechercher…'}" aria-label="Rechercher"><button aria-label="Rechercher">${icon('search')}</button></form>
+              <div class="bo-title" id="bo-title"></div>
+              <form class="search-box" id="bo-search"><span class="sb-ico">${icon('search', 'sm')}</span><input type="search" placeholder="${cfg.searchPh || 'Rechercher…'}" aria-label="Rechercher"><kbd title="Raccourci clavier">/</kbd></form>
               <div class="row" style="margin-left:auto;gap:8px">
                 ${cfg.roles ? `<select class="select bo-role" id="bo-role" title="Démonstration : simuler un rôle">${cfg.roles.map(r => `<option value="${r.id}" ${r.id === this.role ? 'selected' : ''}>Rôle : ${r.nom}</option>`).join('')}</select>` : ''}
                 <a class="btn btn-ghost btn-icon" href="${cfg.front}" title="Voir la boutique" aria-label="Voir le site">${icon('globe')}</a>
@@ -43,6 +44,8 @@
       const rs = document.getElementById('bo-role');
       if (rs) rs.addEventListener('change', () => { this.role = rs.value; App.store.set(cfg.key + '_role', rs.value); document.getElementById('bo-user-role').textContent = cfg.user.role(); const u = document.querySelector('.bo-user'); u.querySelector('b').textContent = cfg.user.nom; u.querySelector('.avatar').textContent = App.initials(cfg.user.nom); this.route(); App.toast('Vue simulée : ' + rs.options[rs.selectedIndex].text.replace('Rôle : ', '')); });
       document.getElementById('bo-search').addEventListener('submit', e => { e.preventDefault(); const q = e.target.querySelector('input').value.trim(); if (q && cfg.onSearch) cfg.onSearch(q); });
+      // Raccourci « / » : placer le curseur dans la recherche
+      document.addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); document.querySelector('#bo-search input').focus(); } });
       this.route();
     },
     allowed(id) { const c = this.cfg; if (!c.roles) return true; const r = c.roles.find(x => x.id === this.role); return r.modules.includes('*') || r.modules.includes(id); },
@@ -61,6 +64,9 @@
       const r = this.cfg.routes[id] ? id : this.cfg.menu[0].id;
       const menuId = this.cfg.alias && this.cfg.alias[r] ? this.cfg.alias[r] : r;
       this.menu(menuId);
+      const m = this.cfg.menu.find(x => x.id === menuId);
+      document.getElementById('bo-title').innerHTML = m ? `<span class="muted">${esc(m.group)}</span>${icon('chevron-right', 'sm')}<b>${esc(m.label)}</b>` : '';
+      document.title = (m ? m.label + ' — ' : '') + 'Back-office · Site E_commerce';
       const v = document.getElementById('bo-view');
       if (!this.allowed(menuId)) {
         v.innerHTML = `<div class="panel denied">${icon('lock')}<h2>Accès refusé</h2><p class="text-2">Le rôle « ${esc(this.cfg.roles.find(x => x.id === this.role).nom)} » n’a pas accès au module « ${esc(this.cfg.menu.find(m => m.id === menuId).label)} ».</p><p class="xs muted">Contrôle d’accès par rôle appliqué côté serveur (API) — la maquette le simule ici.</p><a class="btn btn-primary" href="#${this.cfg.menu[0].id}">Retour au tableau de bord</a></div>`;
@@ -76,8 +82,21 @@
     head(title, sub, actions, crumb) {
       return `${crumb ? `<div class="bo-crumb">${crumb}</div>` : ''}<div class="bo-head"><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div><div class="actions">${actions || ''}</div></div>`;
     },
-    kpi(label, val, ico, sub, delta) {
-      return `<div class="kpi"><div class="k-top">${label}<span class="k-ico">${icon(ico, 'sm')}</span></div><div class="k-val">${val}</div><div class="k-sub">${delta != null ? `<span class="delta ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)} %</span> ` : ''}${sub || ''}</div></div>`;
+    // Indicateur : libellé, valeur, icône, sous-texte, variation %, mini-courbe (tableau de valeurs), teinte
+    kpi(label, val, ico, sub, delta, spark, tone) {
+      return `<div class="kpi ${tone ? 'tone-' + tone : ''}"><div class="k-top"><span class="k-ico">${icon(ico, 'sm')}</span>${label}${delta != null ? `<span class="delta ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta).toString().replace('.', ',')} %</span>` : ''}</div><div class="k-val">${val}</div>${spark ? this.spark(spark) : ''}<div class="k-sub">${sub || ''}</div></div>`;
+    },
+    spark(vals) {
+      const W = 120, H = 32, min = Math.min(...vals), max = Math.max(...vals), r = max - min || 1;
+      const pts = vals.map((v, i) => [(i / (vals.length - 1)) * W, H - 3 - ((v - min) / r) * (H - 6)]);
+      const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+      return `<svg class="k-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path class="sp-area" d="${d} L ${W} ${H} L 0 ${H} Z"/><path class="sp-line" d="${d}"/></svg>`;
+    },
+    // Barre de répartition par statut (couleur + libellé + nombre : jamais la couleur seule)
+    statusBar(items) {
+      const tot = items.reduce((s, i) => s + i.n, 0) || 1;
+      return `<div class="sbar" role="img" aria-label="${esc(items.map(i => i.l + ' ' + i.n).join(', '))}">${items.filter(i => i.n).map(i => `<i class="bg-${i.c}" style="width:${i.n / tot * 100}%" title="${esc(i.l)} : ${i.n}"></i>`).join('')}</div>
+        <div class="sbar-legend">${items.map(i => `<a href="${i.href || '#'}" class="sl-item"><span class="dot bg-${i.c}"></span><span class="grow">${esc(i.l)}</span><b>${i.n}</b><span class="muted xs">${Math.round(i.n / tot * 100)} %</span></a>`).join('')}</div>`;
     },
     panel(title, body, link, flush) {
       return `<section class="panel">${title ? `<div class="panel-head"><h3>${title}</h3>${link || ''}</div>` : ''}${flush ? body : `<div class="panel-body">${body}</div>`}</section>`;

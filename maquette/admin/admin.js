@@ -20,62 +20,92 @@
   const me = () => DB.utilisateurs.find(u => u.id === ROLE_USER[BO.role]);
   const log = (type, msg) => DB.journal.unshift([now(), me().nom, type, msg, '102.16.44.12']);
   const pillStock = p => { const d = dispo(p); return d <= 0 ? '<span class="badge badge-danger">Rupture</span>' : d <= p.seuil ? '<span class="badge badge-warning">Alerte</span>' : '<span class="badge badge-success">OK</span>'; };
-  const F = { cmd: { q: '', sp: '', sl: '', pay: '' }, prod: { q: '', cat: '', v: '', st: '' }, pay: { sp: '' }, avis: 'en_attente', journal: '' };
+  const F = { period: 30, cmd: { q: '', sp: '', sl: '', pay: '' }, prod: { q: '', cat: '', v: '', st: '' }, pay: { sp: '' }, avis: 'en_attente', journal: '' };
+
+  // Vignettes des articles d’une commande (3 max + compteur)
+  const thumbs = o => { const ids = [...new Set(o.lignes.map(l => l.produit))]; return `<div class="thumbs-mini">${ids.slice(0, 3).map(id => pv(P(id), 'sm')).join('')}${ids.length > 3 ? `<span class="more">+${ids.length - 3}</span>` : ''}</div>`; };
 
   const TRANS_LIV = { a_preparer: ['expediee', 'annulee'], expediee: ['en_livraison', 'retour'], en_livraison: ['livree', 'retour'], livree: ['retour'], retour: [], annulee: [] };
 
   const routes = {
     // ================= TABLEAU DE BORD =================
     dashboard() {
-      const os = orders(); const v30 = DB.ventes30; const ca30 = v30.reduce((s, d) => s + d.ca, 0); const nb30 = v30.reduce((s, d) => s + d.commandes, 0);
+      const os = orders(); const n = F.period; const days = DB.ventes30.slice(-n); const prev = DB.ventes30.slice(-2 * n, -n);
+      const ca = days.reduce((s, d) => s + d.ca, 0), nb = days.reduce((s, d) => s + d.commandes, 0);
+      const caPrev = prev.length ? prev.reduce((s, d) => s + d.ca, 0) : ca / 1.14, nbPrev = prev.length ? prev.reduce((s, d) => s + d.commandes, 0) : nb / 1.09;
+      const pctv = (a, b) => Math.round((a / b - 1) * 1000) / 10;
       const aPrep = os.filter(o => o.statutLivraison === 'a_preparer' && !['annule', 'echoue'].includes(o.statutPaiement));
       const payWait = os.filter(o => ['attente', 'initie'].includes(o.statutPaiement) && o.statutLivraison !== 'annulee');
-      const catCA = DB.categories.map(c => ({ l: c.nom, v: DB.produits.filter(p => p.cat === c.id).reduce((s, p) => s + p.ventes * App.unitPrice(p), 0) / 12 })).sort((a, b) => b.v - a.v);
+      const best = days.reduce((a, d) => (d.ca > a.ca ? d : a), days[0]);
       const todo = [
-        ['warning', 'package', aPrep.length + ' commandes à préparer', 'Dont ' + aPrep.filter(o => o.statutPaiement === 'paye').length + ' payées', '#commandes'],
-        ['info', 'card', payWait.length + ' paiements en attente', 'Virements et Mobile Money initiés', '#paiements'],
-        ['danger', 'alert', alertes().length + ' alertes de stock', alertes().filter(p => dispo(p) <= 0).length + ' produit(s) en rupture', '#stock'],
-        ['primary', 'star', DB.avis.filter(a => a.statut === 'en_attente').length + ' avis à modérer', '1 signalé comme suspect', '#avis'],
-        ['primary', 'store', DB.vendeurs.filter(v => v.statut === 'en_attente').length + ' demande vendeur', 'Toamasina Import — dossier à vérifier', '#vendeurs']
+        ['warning', 'package', aPrep.length, 'Commandes à préparer', 'Dont ' + aPrep.filter(o => o.statutPaiement === 'paye').length + ' payées', '#commandes'],
+        ['info', 'card', payWait.length, 'Paiements à rapprocher', 'Virements et Mobile Money initiés', '#paiements'],
+        ['danger', 'alert', alertes().length, 'Alertes de stock', alertes().filter(p => dispo(p) <= 0).length + ' produit(s) en rupture', '#stock'],
+        ['primary', 'star', DB.avis.filter(a => a.statut === 'en_attente').length, 'Avis à modérer', 'Dont 1 contenu suspect', '#avis'],
+        ['primary', 'store', DB.vendeurs.filter(v => v.statut === 'en_attente').length, 'Demande vendeur', 'Toamasina Import — dossier à vérifier', '#vendeurs']
       ];
-      return h('Tableau de bord', 'Lundi 28 septembre 2026 · activité de la marketplace', `<select class="select" style="width:auto;min-height:40px"><option>30 derniers jours</option><option>7 derniers jours</option><option>Ce mois-ci</option><option>Cette année</option></select><a class="btn btn-primary" href="#rapports">${icon('chart', 'sm')} Rapports</a>`) +
-        `<div class="kpis">${kpi('CA aujourd’hui', fmt(v30[29].ca), 'wallet', 'vs hier', 8)}${kpi('CA 30 jours', fmt(ca30), 'chart', 'vs 30 j précédents', 14)}${kpi('Commandes 30 jours', fmtN(nb30), 'package', aPrep.length + ' à traiter', 6)}${kpi('Panier moyen', fmt(ca30 / nb30), 'cart', 'vs 30 j précédents', -3)}</div>
+      const livr = [['a_preparer', 'warning'], ['expediee', 'info'], ['en_livraison', 'primary'], ['livree', 'success'], ['retour', 'danger'], ['annulee', 'muted']]
+        .map(([k, c]) => ({ l: DB.statutsLivraison[k].l, n: os.filter(o => o.statutLivraison === k).length, c, href: '#commandes' }));
+      const byPay = DB.paiements.map(p => ({ l: p.nom, v: os.filter(o => o.paiement === p.id).length })).filter(x => x.v).sort((a, b) => b.v - a.v);
+      const caMois = DB.ventes30.reduce((s, d) => s + d.ca, 0), objectif = 75000000, pc = Math.min(100, Math.round(caMois / objectif * 100));
+      const JT = { Commande: ['package', 'primary'], Stock: ['alert', 'warning'], Produit: ['box', 'info'], Connexion: ['lock', 'success'], 'Sécurité': ['shield', 'danger'], Livraison: ['truck', 'info'], Paiement: ['wallet', 'success'], Vendeur: ['store', 'primary'], 'Paramètres': ['settings', 'warning'], Avis: ['star', 'primary'], Client: ['user', 'info'], Utilisateur: ['users', 'info'], Promotion: ['tag', 'primary'] };
+      const topP = [...DB.produits].sort((a, b) => b.ventes * App.unitPrice(b) - a.ventes * App.unitPrice(a)).slice(0, 5);
+      const heure = new Date().getHours();
+      return h(`${heure < 12 ? 'Bonjour' : heure < 18 ? 'Bon après-midi' : 'Bonsoir'}, ${esc(me().nom.split(' ')[0])}`, new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' · voici l’activité de la marketplace',
+        `<div class="seg-ctl" role="group" aria-label="Période">${[7, 14, 30].map(p => `<button data-period="${p}" class="${n === p ? 'on' : ''}">${p} j</button>`).join('')}</div><a class="btn btn-primary" href="#rapports">${icon('chart', 'sm')} Rapports</a>`) +
+        `<div class="kpis">
+          ${kpi('Chiffre d’affaires', fmt(ca), 'wallet', `sur ${n} jours`, pctv(ca, caPrev), days.map(d => d.ca))}
+          ${kpi('Commandes', fmtN(nb), 'package', `sur ${n} jours`, pctv(nb, nbPrev), days.map(d => d.commandes), 'info')}
+          ${kpi('Panier moyen', fmt(ca / nb), 'cart', 'par commande', pctv(ca / nb, caPrev / nbPrev), days.map((d, i) => { const w = days.slice(Math.max(0, i - 3), i + 1); return w.reduce((s, x) => s + x.ca, 0) / w.reduce((s, x) => s + x.commandes, 0); }), 'accent')}
+          ${kpi('À traiter maintenant', aPrep.length + payWait.length, 'clock', `${aPrep.length} à préparer · ${payWait.length} paiements`, null, null, 'warning')}
+        </div>
         <div class="bo-grid g-2-1">
-          ${panel('Chiffre d’affaires — 30 derniers jours', BO.lineChart('ch-ca', BO.days(30), { label: 'Chiffre d’affaires quotidien sur 30 jours' }) + '<p class="xs muted" style="margin:8px 0 0">Survolez le graphique pour le détail journalier. CA TTC des commandes payées, hors frais de livraison.</p>', '<a href="#rapports">Détail</a>')}
-          ${panel('À traiter', todo.map(t => `<a class="list-item" href="${t[4]}"><span class="li-ico" style="background:var(--${t[0]}-50);color:var(--${t[0]})">${icon(t[1], 'sm')}</span><div class="grow"><b class="small">${t[2]}</b><div class="xs muted">${t[3]}</div></div>${icon('chevron-right', 'sm')}</a>`).join(''), '', true)}
+          ${panel('Chiffre d’affaires', `<div class="chart-sum"><div><b>${fmt(ca)}</b>Total ${n} jours</div><div><b>${fmt(ca / n)}</b>Moyenne par jour</div><div><b>${fmt(best.ca)}</b>Meilleur jour · ${best.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</div></div>` +
+            BO.lineChart('ch-ca', BO.days(n), { label: `Chiffre d’affaires quotidien sur ${n} jours` }) + '<p class="xs muted" style="margin:8px 0 0">Survolez le graphique pour le détail journalier. CA TTC des commandes payées, hors frais de livraison.</p>', '<a href="#rapports">Détail →</a>')}
+          ${panel('À traiter', todo.map(t => `<a class="list-item" href="${t[5]}"><span class="li-ico" style="background:var(--${t[0]}-50);color:var(--${t[0]})">${icon(t[1], 'sm')}</span><div class="grow"><b class="small">${t[3]}</b><div class="xs muted">${t[4]}</div></div><span class="li-n">${t[2]}</span>${icon('chevron-right', 'sm')}</a>`).join(''), '', true)}
+        </div>
+        <div class="bo-grid g-3" style="margin-top:16px">
+          ${panel('Statut des livraisons', BO.statusBar(livr), '<a href="#livraisons">Suivi →</a>')}
+          ${panel('Objectif de septembre', `<div class="goal"><div class="goal-ring" style="--p:${pc}"><span>${pc} %</span></div><div><div class="small text-2">CA réalisé</div><b style="font-size:1.15rem;font-family:var(--font-title)">${fmt(caMois)}</b><div class="xs muted" style="margin-top:4px">Objectif : ${fmt(objectif)}<br>Reste ${fmt(Math.max(0, objectif - caMois))} en 2 jours</div></div></div>
+            <div class="sum-row small" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><span>Commission marketplace</span><b>${fmt(caMois * .104)}</b></div><div class="sum-row small"><span>Nouveaux clients</span><b>318</b></div><div class="sum-row small"><span>Taux de conversion</span><b>2,4 %</b></div>`)}
+          ${panel('Moyens de paiement', BO.hbars(byPay, v => v + ' cmd') + '<p class="xs muted" style="margin:14px 0 0">Nombre de commandes par moyen, toutes périodes de l’échantillon.</p>')}
         </div>
         <div class="bo-grid g-2-1" style="margin-top:16px">
           ${panel('Commandes récentes', table([
-            { l: 'Commande', v: o => `<b>${o.numero}</b><div class="xs muted">${fmtDate(o.date)}</div>` }, { l: 'Client', v: o => cname(o.client) },
+            { l: 'Commande', v: o => `<b>${o.numero.slice(-6)}</b><div class="xs muted nowrap">${fmtDate(o.date).replace(' 2026', '')}</div>` },
+            { l: 'Client', v: o => `<div class="cell-user"><span class="avatar">${App.initials(cname(o.client))}</span><span>${esc(cname(o.client))}</span></div>` },
+            { l: 'Articles', v: o => thumbs(o) },
             { l: 'Paiement', v: o => statusPill('statutsPaiement', o.statutPaiement) }, { l: 'Livraison', v: o => statusPill('statutsLivraison', o.statutLivraison) },
-            { l: 'Total', cls: 'right nowrap', v: o => `<b>${fmt(o.total)}</b>` }], os.slice(0, 6), { href: o => 'commande/' + o.numero, foot: false }), '<a href="#commandes">Toutes les commandes</a>', true)}
-          ${panel('Ventes par catégorie', BO.hbars(catCA, v => (v / 1e6).toFixed(1).replace('.', ',') + ' M Ar'), '<a href="#rapports">Rapports</a>')}
+            { l: 'Total', cls: 'right nowrap', v: o => `<b>${fmt(o.total)}</b>` }], os.slice(0, 6), { href: o => 'commande/' + o.numero, foot: false }), '<a href="#commandes">Toutes →</a>', true)}
+          ${panel('Activité récente', `<ul class="feed">${DB.journal.slice(0, 6).map(j => { const t = JT[j[2]] || ['info', 'info']; return `<li><span class="f-ico" style="background:var(--${t[1]}-50);color:var(--${t[1]})">${icon(t[0])}</span><div class="grow"><b>${esc(j[1])}</b> <time>· ${fmtDate(j[0]).replace(/ 2026/, '')}</time><p>${esc(j[3])}</p></div></li>`; }).join('')}</ul>`, '<a href="#journal">Journal →</a>', true)}
         </div>
         <div class="bo-grid g-1-1" style="margin-top:16px">
-          ${panel('Top vendeurs du mois', table([{ l: 'Vendeur', v: v => `<b>${esc(v.nom)}</b><div class="xs muted">${v.ville}</div>` }, { l: 'Ventes', cls: 'right', v: v => fmtN(v.ventes) }, { l: 'Note', cls: 'right', v: v => v.note + ' ★' }, { l: 'Commission', cls: 'right', v: v => v.commission + ' %' }], [...DB.vendeurs].filter(v => v.statut === 'actif').sort((a, b) => b.ventes - a.ventes).slice(0, 5), { href: v => 'vendeur/' + v.id, foot: false }), '<a href="#vendeurs">Tous</a>', true)}
-          ${panel('Stock faible', table([{ l: 'Produit', v: p => `<div class="cell-prod">${pv(p, 'sm')}<div><b class="small">${esc(p.nom)}</b><div class="xs muted">${esc(V(p.vendeur).nom)}</div></div></div>` }, { l: 'Dispo', cls: 'right', v: p => `<b>${dispo(p)}</b> / seuil ${p.seuil}` }, { l: '', v: pillStock }], alertes(), { foot: false }), '<a href="#stock">Gérer le stock</a>', true)}
+          ${panel('Produits les plus rentables', topP.map((p, i) => `<a class="rank" href="#produit/${p.id}"><span class="r-n">${i + 1}</span>${pv(p, 'sm')}<div class="grow" style="min-width:0"><b>${esc(p.nom)}</b><span class="xs muted">${esc(V(p.vendeur).nom)} · ${fmtN(p.ventes)} ventes</span></div><b class="small nowrap">${fmt(p.ventes * App.unitPrice(p))}</b></a>`).join(''), '<a href="#produits">Catalogue →</a>', true)}
+          ${panel('Stock faible', table([{ l: 'Produit', v: p => `<div class="cell-prod">${pv(p, 'sm')}<div><b class="small">${esc(p.nom)}</b><div class="xs muted">${esc(V(p.vendeur).nom)}</div></div></div>` }, { l: 'Dispo', cls: 'right nowrap', v: p => `<b>${dispo(p)}</b> / seuil ${p.seuil}` }, { l: '', v: pillStock }], alertes(), { href: p => 'stock', foot: false }), '<a href="#stock">Gérer →</a>', true)}
         </div>`;
     },
 
     // ================= COMMANDES =================
     commandes() {
-      const f = F.cmd;
-      const l = orders().filter(o => (!f.sp || o.statutPaiement === f.sp) && (!f.sl || o.statutLivraison === f.sl) && (!f.pay || o.paiement === f.pay) &&
+      const f = F.cmd; const all = orders();
+      const l = all.filter(o => (!f.sp || o.statutPaiement === f.sp) && (!f.sl || o.statutLivraison === f.sl) && (!f.pay || o.paiement === f.pay) &&
         (!f.q || (o.numero + ' ' + cname(o.client)).toLowerCase().includes(f.q.toLowerCase())));
       const opt = (map, cur) => Object.entries(DB[map]).map(([k, s]) => `<option value="${k}" ${cur === k ? 'selected' : ''}>${s.l}</option>`).join('');
-      return h('Commandes', orders().length + ' commandes · les commandes passées sur le site dans ce navigateur apparaissent ici', `<button class="btn" data-export>${icon('download', 'sm')} Exporter CSV</button>`) +
-        panel('', `<div class="filters-bar">
+      const tabs = [['', 'Toutes'], ['a_preparer', 'À préparer'], ['expediee', 'Expédiées'], ['en_livraison', 'En livraison'], ['livree', 'Livrées'], ['retour', 'Retours'], ['annulee', 'Annulées']];
+      return h('Commandes', all.length + ' commandes dans l’échantillon · les commandes passées sur le site dans ce navigateur apparaissent ici', `<button class="btn" data-export>${icon('download', 'sm')} Exporter CSV</button>`) +
+        panel('', `<div class="status-tabs" role="tablist">${tabs.map(t => `<button role="tab" aria-selected="${f.sl === t[0]}" class="${f.sl === t[0] ? 'on' : ''}" data-tabsl="${t[0]}">${t[1]} <span class="n">${t[0] ? all.filter(o => o.statutLivraison === t[0]).length : all.length}</span></button>`).join('')}</div>
+          <div class="filters-bar">
           <input class="input" data-fc="q" placeholder="N° de commande ou client…" value="${esc(f.q)}">
           <select class="select" data-fc="sp"><option value="">Tous paiements</option>${opt('statutsPaiement', f.sp)}</select>
-          <select class="select" data-fc="sl"><option value="">Toutes livraisons</option>${opt('statutsLivraison', f.sl)}</select>
           <select class="select" data-fc="pay"><option value="">Tous moyens</option>${DB.paiements.map(p => `<option value="${p.id}" ${f.pay === p.id ? 'selected' : ''}>${p.nom}</option>`).join('')}</select>
-          ${f.q || f.sp || f.sl || f.pay ? `<button class="btn btn-sm btn-ghost" data-freset="cmd">Effacer</button>` : ''}</div>` +
+          ${f.q || f.sp || f.sl || f.pay ? `<button class="btn btn-sm btn-ghost" data-freset="cmd">Effacer les filtres</button>` : ''}</div>
+          <div class="bulk-bar" id="bulk"><span id="bulk-n"></span><button class="btn btn-sm btn-primary" data-bulk="expediee">${icon('truck', 'sm')} Marquer expédiées</button><button class="btn btn-sm" data-bulk="print">${icon('print', 'sm')} Bons de préparation</button><button class="btn btn-sm btn-ghost" data-bulk="clear">Désélectionner</button></div>` +
           table([
+            { l: '<input type="checkbox" data-selall aria-label="Tout sélectionner">', v: o => `<input type="checkbox" data-sel="${o.numero}" aria-label="Sélectionner ${o.numero}">` },
             { l: 'Commande', v: o => `<b>${o.numero}</b>${o._local ? ' <span class="badge badge-info">Nouvelle</span>' : ''}<div class="xs muted">${fmtDate(o.date)}</div>` },
-            { l: 'Client', v: o => `${cname(o.client)}<div class="xs muted">${CL(o.client).ville}</div>` },
-            { l: 'Vendeurs', v: o => [...new Set(o.lignes.map(x => x.vendeur))].map(x => `<span class="badge">${esc(V(x).nom)}</span>`).join(' ') },
-            { l: 'Articles', cls: 'right', v: o => o.lignes.reduce((s, x) => s + x.qte, 0) },
-            { l: 'Moyen', v: o => PAY(o.paiement).nom },
+            { l: 'Client', v: o => `<div class="cell-user"><span class="avatar">${App.initials(cname(o.client))}</span><div>${esc(cname(o.client))}<div class="xs muted">${CL(o.client).ville}</div></div></div>` },
+            { l: 'Articles', v: o => thumbs(o) },
+            { l: 'Moyen', v: o => `<span class="row" style="gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${PAY(o.paiement).couleur}"></span>${PAY(o.paiement).nom}</span>` },
             { l: 'Paiement', v: o => statusPill('statutsPaiement', o.statutPaiement) },
             { l: 'Livraison', v: o => statusPill('statutsLivraison', o.statutLivraison) },
             { l: 'Total', cls: 'right nowrap', v: o => `<b>${fmt(o.total)}</b>` }
@@ -396,7 +426,8 @@
         securite: panel('Sécurité', `<div class="stack">${[['HTTPS obligatoire (redirection automatique)', true, true], ['Double authentification obligatoire pour les administrateurs', true], ['Blocage 15 min après 5 tentatives de connexion échouées', true], ['Limitation de débit de l’API (anti-abus)', true], ['Déconnexion automatique après 30 min d’inactivité', true], ['Journalisation des actions sensibles', true, true]].map(s => `<div class="row between"><span class="small">${s[0]}</span>${BO.sw(s[1], s[2] ? 'disabled' : '')}</div>`).join('')}
           <div class="alert alert-info">${icon('shield')}<span class="small">Mots de passe hachés (Argon2id / bcrypt). Protection CSRF, validation des entrées côté client et serveur, requêtes paramétrées contre les injections SQL.</span></div></div>`),
         sauvegardes: panel('Sauvegardes & restauration', `<div class="kpis" style="margin-bottom:0">${kpi('Dernière sauvegarde', '28/09 · 03:00', 'check', 'PostgreSQL + fichiers')}${kpi('Fréquence', 'Quotidienne', 'clock', 'rétention 30 jours')}${kpi('Dernier test de restauration', '15/09/2026', 'refresh', 'réussi en 11 min')}${kpi('Stockage', 'Hors site', 'globe', 'chiffré AES-256')}</div>
-          <div class="row wrap" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-backup-test>Lancer un test de restauration (staging)</button><button class="btn btn-primary" data-backup>Sauvegarder maintenant</button></div>`)
+          <div class="row wrap" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-backup-test>Lancer un test de restauration (staging)</button><button class="btn btn-primary" data-backup>Sauvegarder maintenant</button></div>`) +
+          `<div style="margin-top:16px">${panel('Données de démonstration', `<p class="small text-2" style="margin-top:0">Efface ce qui a été enregistré dans ce navigateur pendant la démonstration : panier, commandes passées sur le site, adresses, favoris, rôle simulé.</p><button class="btn btn-danger" data-reset-demo>${icon('refresh', 'sm')} Réinitialiser les données de démonstration</button>`)}</div>`
       }[tab];
       return h('Paramètres', 'Configuration de la plateforme') + `<div class="tabs" style="margin-bottom:16px">${tabs.map(t => `<a href="#parametres/${t[0]}" class="${tab === t[0] ? 'on' : ''}">${t[1]}</a>`).join('')}</div>` + body;
     }
@@ -424,8 +455,14 @@
       actions: [{ label: c.statut === 'actif' ? 'Bloquer le compte' : 'Débloquer', cls: c.statut === 'actif' ? 'btn-danger' : 'btn-primary', onClick() { c.statut = c.statut === 'actif' ? 'bloque' : 'actif'; log('Client', 'Compte ' + c.email + ' : ' + c.statut); BO.refresh(); toast('Compte ' + (c.statut === 'actif' ? 'débloqué' : 'bloqué')); } }, { label: 'Fermer' }] });
   }
 
+  function updateBulk() {
+    const n = document.querySelectorAll('[data-sel]:checked').length; const b = document.getElementById('bulk'); if (!b) return;
+    b.classList.toggle('show', n > 0); document.getElementById('bulk-n').textContent = n + ' commande(s) sélectionnée(s)';
+  }
   document.addEventListener('change', e => {
     const t = e.target;
+    if (t.hasAttribute('data-selall')) { document.querySelectorAll('[data-sel]').forEach(c => { c.checked = t.checked; }); updateBulk(); return; }
+    if (t.hasAttribute('data-sel')) { updateBulk(); return; }
     if (t.dataset.fc) { F.cmd[t.dataset.fc] = t.value.trim(); BO.refresh(); }
     if (t.dataset.fp) { F.prod[t.dataset.fp] = t.value.trim(); BO.refresh(); }
     if (t.hasAttribute('data-fpay')) { F.pay.sp = t.value; BO.refresh(); }
@@ -449,6 +486,23 @@
 
   document.addEventListener('click', e => {
     const q = s => e.target.closest(s);
+    if (q('[data-period]')) { F.period = +q('[data-period]').dataset.period; BO.refresh(); }
+    if (q('[data-tabsl]')) { F.cmd.sl = q('[data-tabsl]').dataset.tabsl; BO.refresh(); }
+    if (q('[data-bulk]')) {
+      const act = q('[data-bulk]').dataset.bulk; const nums = [...document.querySelectorAll('[data-sel]:checked')].map(c => c.dataset.sel);
+      if (act === 'clear') { document.querySelectorAll('[data-sel], [data-selall]').forEach(c => { c.checked = false; }); updateBulk(); }
+      if (act === 'print') toast(nums.length + ' bon(s) de préparation générés (PDF).');
+      if (act === 'expediee') {
+        const list = nums.map(findOrder);
+        const ok = list.filter(o => o.statutLivraison === 'a_preparer' && (o.statutPaiement === 'paye' || o.paiement === 'cod'));
+        const ko = list.filter(o => !ok.includes(o));
+        confirmBox('Marquer ' + ok.length + ' commande(s) comme expédiée(s) ?',
+          (ok.length ? `<p>${ok.map(o => '<b>' + o.numero + '</b>').join(', ')}. Les clients seront notifiés par SMS.</p>` : '<p>Aucune commande éligible.</p>') +
+          (ko.length ? `<div class="alert alert-warning">${icon('alert')}<span>${ko.length} commande(s) ignorée(s) : paiement non confirmé ou déjà expédiée (${ko.map(o => o.numero.slice(-6)).join(', ')}).</span></div>` : ''),
+          () => { if (!ok.length) return; ok.forEach(o => setOrderLiv(o, 'expediee')); BO.refresh(); });
+      }
+    }
+    if (q('[data-reset-demo]')) confirmBox('Réinitialiser les données de démonstration ?', '<p>Le panier, les commandes passées, les adresses, les favoris et les préférences enregistrés dans ce navigateur seront effacés.</p>', () => { try { Object.keys(localStorage).filter(k => k.startsWith('sec_')).forEach(k => localStorage.removeItem(k)); } catch (err) { /* stockage indisponible */ } toast('Données de démonstration réinitialisées'); setTimeout(() => location.reload(), 600); }, { yes: 'Réinitialiser', yesCls: 'btn-danger', tone: 'danger' });
     if (q('[data-freset]')) { const k = q('[data-freset]').dataset.freset; Object.keys(F[k]).forEach(x => F[k][x] = ''); BO.refresh(); }
     if (q('[data-export]')) toast('Export généré — le fichier sera téléchargé (maquette).');
     if (q('[data-client]')) clientModal(q('[data-client]').dataset.client);
@@ -586,7 +640,7 @@
     key: 'admin', tag: 'Admin', home: '#dashboard', front: '../index.html', defaultRole: 'super', roles: DB.roles,
     searchPh: 'Commande, produit, client…',
     user: { get nom() { return me().nom; }, role: () => DB.roles.find(r => r.id === BO.role).nom },
-    sideFoot: `<a class="bo-link" href="../vendeur/index.html">${icon('store')} Espace vendeur (démo)</a><a class="bo-link" href="../sommaire.html">${icon('list')} Sommaire des écrans</a>`,
+    sideFoot: `<a class="bo-link" href="../vendeur/index.html">${icon('store')} Espace vendeur (démo)</a><a class="bo-link" href="../index.html">${icon('globe')} Voir le site</a>`,
     notifs: [['warning', 'package', 'Nouvelle commande CMD-2026-001284', 'Il y a 18 min · MVola · 113 500 Ar'], ['danger', 'alert', 'Stock faible : Montre classique', '3 unités, seuil 4'], ['info', 'store', 'Demande vendeur : Toamasina Import', 'Dossier incomplet'], ['primary', 'star', '3 avis à modérer', 'Dont 1 contenu suspect']],
     menu: [
       { id: 'dashboard', label: 'Tableau de bord', icon: 'grid', group: 'Pilotage' }, { id: 'rapports', label: 'Rapports', icon: 'chart', group: 'Pilotage' },
@@ -601,7 +655,7 @@
     alias: { commande: 'commandes', produit: 'produits', vendeur: 'vendeurs' },
     routes,
     after: {
-      dashboard: () => BO.bindLine('ch-ca', BO.days(30), fmt),
+      dashboard: () => BO.bindLine('ch-ca', BO.days(F.period), fmt),
       rapports: () => BO.bindLine('ch-rep', BO.days(30), fmt),
       produit: () => seoPreview()
     },

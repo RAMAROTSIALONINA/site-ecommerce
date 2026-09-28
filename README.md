@@ -9,8 +9,7 @@ Maquette UX/UI complète et navigable de la plateforme e-commerce décrite dans 
 
 ## Accès
 
-- **Sommaire de tous les écrans** : `maquette/sommaire.html`
-- **Site client** : `maquette/index.html`
+- **Site client (page d’accueil)** : `maquette/index.html` — la racine du dépôt redirige ici
 - **Back-office administration** : `maquette/admin/index.html`
 - **Espace vendeur** : `maquette/vendeur/index.html`
 
@@ -48,4 +47,4 @@ le même nom (format carré conseillé), sans modifier le code. Si une image est
 
 HTML / CSS / JavaScript sans dépendance ni build. Les données de démonstration sont dans
 `maquette/assets/js/data.js` ; le panier, les commandes passées et les favoris sont conservés
-dans le `localStorage` du navigateur (bouton « Réinitialiser » dans le sommaire).
+dans le `localStorage` du navigateur (bouton « Réinitialiser les données de démonstration » dans Back-office › Paramètres › Sauvegardes).
