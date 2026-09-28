@@ -33,7 +33,9 @@
             <a class="hdr-action" href="panier.html" aria-label="Panier">${icon('cart')}<span class="lbl">Panier</span><span class="count" data-cart-count>0</span></a>
           </nav>
         </div>
-        <div class="hdr-mobile-search">${mSearch}</div>
+        <div class="hdr-mobile-search">${mSearch}
+          <nav class="chips-row" aria-label="Raccourcis catégories"><a class="chip" href="catalogue.html?promo=1" style="color:var(--accent);border-color:#FED7AA">${icon('percent', 'sm')} Promos</a>${cats.map(c => `<a class="chip ${cat === c.id ? 'active' : ''}" href="catalogue.html?cat=${c.id}">${c.nom.split(' & ')[0].replace('Épicerie fine', 'Épicerie').replace('Artisanat malgache', 'Artisanat')}</a>`).join('')}<a class="chip" href="boutiques.html">${icon('store', 'sm')} Boutiques</a></nav>
+        </div>
       </div>
       <nav class="hdr-nav" aria-label="Catégories"><div class="container">
         <a class="nav-all" href="catalogue.html">${icon('grid', 'sm')} Toutes les catégories</a>
@@ -50,7 +52,7 @@
         <a class="drawer-link" href="catalogue.html?promo=1" style="color:var(--accent)">${icon('percent')} Promotions</a>
         <a class="drawer-link" href="boutiques.html">${icon('store')} Toutes les boutiques</a>
         <div class="drawer-title">Catégories</div>
-        ${cats.map(c => `<a class="drawer-link" href="catalogue.html?cat=${c.id}">${icon(c.icon)} ${c.nom}</a>`).join('')}
+        ${cats.map(c => `<a class="drawer-link" href="catalogue.html?cat=${c.id}">${App.pvCat(c)} ${c.nom}</a>`).join('')}
         <div class="drawer-sep"></div>
         <a class="drawer-link" href="compte.html">${icon('user')} Mon compte</a>
         <a class="drawer-link" href="compte.html#commandes">${icon('package')} Mes commandes</a>
@@ -126,5 +128,9 @@
     if (o) { document.getElementById('drawer-' + o.dataset.drawer).classList.add('open'); document.body.classList.add('drawer-open'); }
     if (e.target.closest('[data-drawer-close]')) { document.body.classList.remove('drawer-open'); document.querySelectorAll('.drawer.open').forEach(d => d.classList.remove('open')); }
   });
+  // En-tête compact au défilement (mobile) : masque les raccourcis catégories
+  const hdr = document.querySelector('.site-header');
+  // Hystérésis : évite le clignotement quand la hauteur de l’en-tête change
+  if (hdr) addEventListener('scroll', () => { if (scrollY > 140) hdr.classList.add('compact'); else if (scrollY < 10) hdr.classList.remove('compact'); }, { passive: true });
   if (App.qs('focus')) { const i = document.querySelector('.hdr-mobile-search input'); if (i && innerWidth < 768) i.focus(); }
 })();
